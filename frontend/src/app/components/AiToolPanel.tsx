@@ -1,6 +1,7 @@
 import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Trash2, Pencil, Wand2, HelpCircle, ChevronUp, Plus } from 'lucide-react';
 import { AdvancedOptionsModal } from "./AdvancedOptionsModal";
+import { DebugFunctions, SliderGenerate, PromptGenerate, TestSliderFunction, TestPromptFunction, type SliderConfig, type Prompt } from "./ApiFunctions";
 
 
 
@@ -11,7 +12,7 @@ const debugMode: number = 1;
 
 function CreateTab() {
 
-  const [response, setResponse] = useState<string>("debug text");
+  /* const [response, setResponse] = useState<string>("debug text");
 
   const fetchData = async () => {
     try {
@@ -21,18 +22,12 @@ function CreateTab() {
     } catch (error) {
       setResponse("Error fetching data");
     }
-  };
+  }; */
 
   const getHtml = () => {
     switch (debugMode) {
       case 1:
-        return (
-          <div>
-            <h1 className="text-white">Debug Mode 1</h1>
-            <p className = "text-white">{response || "Loading..."}</p>
-            <button onClick={fetchData}>(click to test API)</button>
-          </div>
-        );
+        return DebugFunctions(1);
       default:
         return (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
@@ -55,19 +50,8 @@ function CreateTab() {
 
 // END TEST CODE FOR API /////////////////////////////////////////////////////
 
-interface Prompt {
-  id: string;
-  label: string;
-  text: string;
-}
 
-interface SliderConfig {
-  id: string;
-  label: string;
-  leftLabel: string;
-  rightLabel: string;
-  value: number;
-}
+
 
 interface AiToolPanelProps {
   onClose: () => void;
@@ -77,25 +61,25 @@ interface AiToolPanelProps {
 
 const INITIAL_SLIDERS: SliderConfig[] = [
   {
-    id: "tone1",
+    id: "tone",
     label: "Tone",
-    leftLabel: "Casual",
-    rightLabel: "Professional",
-    value: 70,
+    level0: "Casual",
+    level100: "Professional",
+    value: 0,
   },
   {
-    id: "tone2",
-    label: "Tone",
-    leftLabel: "Casual",
-    rightLabel: "Professional",
-    value: 65,
+    id: "detail",
+    label: "Detail",
+    level0: "Concise",
+    level100: "Detailed",
+    value: 0,
   },
   {
-    id: "tone3",
-    label: "Tone",
-    leftLabel: "Casual",
-    rightLabel: "Professional",
-    value: 72,
+    id: "clarity",
+    label: "Clarity",
+    level0: "Natural",
+    level100: "Very Clear",
+    value: 0,
   },
 ];
 
@@ -103,17 +87,12 @@ const INITIAL_PROMPTS: Prompt[] = [
   {
     id: "1",
     label: "Prompt 1",
-    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nunc arcu, laoreet ut ornare ut, condimentum scelerisque nisl.",
+    userPrompt: "Make the tone more professional and concise.",
   },
   {
     id: "2",
     label: "Prompt 2",
-    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nunc arcu, laoreet ut ornare ut, condimentum scelerisque nisl.",
-  },
-  {
-    id: "3",
-    label: "Prompt 3",
-    text: "Make the tone more professional and concise.",
+    userPrompt: "Make the content more engaging and interesting.",
   },
 ];
 
@@ -237,11 +216,11 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
 
   const addNewSlider = () => {
     const newSlider: SliderConfig = {
-      id: `tone-${Date.now()}`,
+      id: `slider-${Date.now()}`,
       label: "",
-      leftLabel: "Casual",
-      rightLabel: "Professional",
-      value: 50,
+      level0: "Low",
+      level100: "High",
+      value: 0,
     };
     setSliders((prev) => [...prev, newSlider]);
     setEditingLabelId(newSlider.id);
@@ -274,7 +253,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
     const newPrompt: Prompt = {
       id: Date.now().toString(),
       label: `Prompt ${prompts.length + 1}`,
-      text: promptInput.trim(),
+      userPrompt: promptInput.trim(),
     };
     setPrompts((prev) => [...prev, newPrompt]);
     setPromptInput("");
@@ -483,8 +462,8 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                         </div>
                       </div>
                       <div className="flex items-center justify-between text-[10px] text-[#898989] mb-1">
-                        <span>{slider.leftLabel}</span>
-                        <span>{slider.rightLabel}</span>
+                        <span>{slider.level0}</span>
+                        <span>{slider.level100}</span>
                       </div>
                       <input
                         type="range"
@@ -652,7 +631,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                         </div>
                       </div>
                       <p className="text-[#E9E9E9] text-[12px] leading-[1.5]">
-                        {prompt.text}
+                        {prompt.userPrompt}
                       </p>
                     </div>
                   ))}
@@ -702,7 +681,16 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                       Advanced options
                     </button>
                   )}
-                  <button className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">
+                  <button 
+                    onClick={async () => {
+                      if (mode === "slider") {
+                        await SliderGenerate(outputRef.current?.innerHTML || '', sliders);
+                      } else if (mode === "prompt") {
+                        await PromptGenerate(outputRef.current?.innerHTML || '', prompts);
+                      }
+                    }}
+                    className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors"
+                  >
                     Generate
                   </button>
                 </div>

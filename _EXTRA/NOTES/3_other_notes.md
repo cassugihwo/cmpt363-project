@@ -13,8 +13,12 @@ https://ai.google.dev/gemini-api/docs/function-calling?example=chart#javascript_
 
 **Long context (not sure what this means yet but seems important..?)**
 https://ai.google.dev/gemini-api/docs/long-context
+
 --> "Where is the best place to put my query in the context window?
 In most cases, especially if the total context is long, the model's performance will be better if you put your query / question at the end of the prompt (after all the other context)."
 
+**important i think**
 https://ai.google.dev/gemini-api/docs/text-generation
+related:
+https://ai.google.dev/api/generate-content#v1beta.GenerationConfig
 
