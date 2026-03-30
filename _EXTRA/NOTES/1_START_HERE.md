@@ -20,7 +20,15 @@ npm install
 ```
 a folder called node_modules should appear in both the backend and frontend folders.
 
-## 3. Running the application
+## 3. Add the API key
+Go to /backend and create a file called .env
+Add this:
+```
+GEMINI_API_KEY=replace_with_api_key
+```
+and replace "replace_with_gemini_api_key" with the Gemini api key
+
+## 4. Running the application
 The frontend and backend servers must be run separately in **separate terminals!!**
 
 Backend terminal:
