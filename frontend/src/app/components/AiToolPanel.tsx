@@ -194,6 +194,7 @@ function NumberField({
 export function AiToolPanel({ onClose }: AiToolPanelProps) {
 
   const [activeTab, setActiveTab] = useState<"rewrite" | "create">("rewrite");
+  const [selectedText, setSelectedText] = useState("Selected");
   const [mode, setMode] = useState<"slider" | "prompt">("slider");
   const [sliders, setSliders] = useState<SliderConfig[]>(INITIAL_SLIDERS);
   const [prompts, setPrompts] = useState<Prompt[]>(INITIAL_PROMPTS);
@@ -295,6 +296,15 @@ export function AiToolPanel({ onClose }: AiToolPanelProps) {
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [openMenuId]);
+  
+  // ALI - Attempt to make selection work
+  React.useEffect(() => {
+    const handleTextSelected = (event: any) => {
+      setSelectedText("hi");
+    };
+    document.addEventListener('select', handleTextSelected);
+    //return () => document.removeEventListener('select', handleTextSelected);
+  }, [selectedText, setSelectedText]);
 
   return (
     <>
@@ -387,7 +397,7 @@ export function AiToolPanel({ onClose }: AiToolPanelProps) {
                   ref={outputRef}
                   contentEditable
                   suppressContentEditableWarning
-                  data-placeholder="Select some text"
+                  data-placeholder={selectedText}
                   className="ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3"
                 />
               </div>
