@@ -1,0 +1,1 @@
+export const testPrompt = "Write a haiku about Hu Tao from Genshin Impact.";
