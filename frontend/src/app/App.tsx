@@ -77,6 +77,7 @@ export default function App() {
   const [openDocuments, setOpenDocuments] = useState<DocTab[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [aiToolOpen, setAiToolOpen] = useState(false);
+  const [selectedTextToPass, setSelectedTextToPass] = useState<string>("");
   const [recentDocs] = useState<DocTab[]>(SAMPLE_DOCS);
 
   const openDocument = (doc: DocTab) => {
@@ -147,8 +148,12 @@ export default function App() {
         <DocumentEditor
           document={activeDoc}
           aiToolOpen={aiToolOpen}
-          onToggleAiTool={() => setAiToolOpen((prev) => !prev)}
+          onToggleAiTool={(selectedText?: string) => {
+            if (selectedText !== undefined && !aiToolOpen) setSelectedTextToPass(selectedText);
+            setAiToolOpen((prev) => !prev);
+          }}
           onUpdateDocument={updateDocument}
+          selectedTextToPass={selectedTextToPass}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, KeyboardEvent } from 'react';
+import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Trash2, Pencil, Wand2, HelpCircle, ChevronUp, Plus } from 'lucide-react';
 import { AdvancedOptionsModal } from "./AdvancedOptionsModal";
 
@@ -71,6 +71,8 @@ interface SliderConfig {
 
 interface AiToolPanelProps {
   onClose: () => void;
+  selectedText?: string;
+  onFinish: (text: string) => void;
 }
 
 const INITIAL_SLIDERS: SliderConfig[] = [
@@ -191,10 +193,9 @@ function NumberField({
   );
 }
 
-export function AiToolPanel({ onClose }: AiToolPanelProps) {
+export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProps) {
 
   const [activeTab, setActiveTab] = useState<"rewrite" | "create">("rewrite");
-  const [selectedText, setSelectedText] = useState("Selected");
   const [mode, setMode] = useState<"slider" | "prompt">("slider");
   const [sliders, setSliders] = useState<SliderConfig[]>(INITIAL_SLIDERS);
   const [prompts, setPrompts] = useState<Prompt[]>(INITIAL_PROMPTS);
@@ -297,14 +298,12 @@ export function AiToolPanel({ onClose }: AiToolPanelProps) {
     }
   }, [openMenuId]);
   
-  // ALI - Attempt to make selection work
-  React.useEffect(() => {
-    const handleTextSelected = (event: any) => {
-      setSelectedText("hi");
-    };
-    document.addEventListener('select', handleTextSelected);
-    //return () => document.removeEventListener('select', handleTextSelected);
-  }, [selectedText, setSelectedText]);
+  // Set selected text in output when provided and output is empty
+  useEffect(() => {
+    if (selectedText && outputRef.current && outputRef.current.innerHTML.trim() === '') {
+      outputRef.current.innerHTML = selectedText;
+    }
+  }, [selectedText]);
 
   return (
     <>
@@ -397,7 +396,7 @@ export function AiToolPanel({ onClose }: AiToolPanelProps) {
                   ref={outputRef}
                   contentEditable
                   suppressContentEditableWarning
-                  data-placeholder={selectedText}
+                  data-placeholder="Select some text to rewrite"
                   className="ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3"
                 />
               </div>
@@ -688,7 +687,10 @@ export function AiToolPanel({ onClose }: AiToolPanelProps) {
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
-                <button className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors">
+                <button 
+                  onClick={() => onFinish(outputRef.current?.innerHTML || '')}
+                  className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
+                >
                   Finish
                 </button>
                 <div className="flex items-center gap-3">

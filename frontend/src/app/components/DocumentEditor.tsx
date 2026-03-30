@@ -31,8 +31,9 @@ export interface DocTab {
 interface DocumentEditorProps {
   document: DocTab | null;
   aiToolOpen: boolean;
-  onToggleAiTool: () => void;
+  onToggleAiTool: (selectedText?: string) => void;
   onUpdateDocument: (id: string, content: string) => void;
+  selectedTextToPass: string;
 }
 
 const SAMPLE_CONTENT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nunc arcu, laoreet ut ornare ut, condimentum scelerisque nisl. Nunc vel quam eu ligula facilisis consectetur id non est. Aenean maximus ac lacus id blandit. Etiam feugiat ligula et hendrerit mollis. Proin ut lacus orci. In imperdiet nulla sed magna ullamcorper, ac maximus elit eleifend. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus egestas, mi quis efficitur aliquam, tellus diam eleifend enim, vitae lacinia nisi libero a tellus. Sed vulputate bibendum velit nec rhoncus. Fusce pulvinar tempor diam sit amet ornare. Cras aliquet varius purus, ut congue lacus gravida ac. Nullam cursus scelerisque auctor. Etiam sit amet ornare sapien. Aenean quis posuere justo.
@@ -89,6 +90,7 @@ export function DocumentEditor({
   aiToolOpen,
   onToggleAiTool,
   onUpdateDocument,
+  selectedTextToPass,
 }: DocumentEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState(16);
@@ -100,6 +102,15 @@ export function DocumentEditor({
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [alignment, setAlignment] = useState<"left" | "center" | "right">("left");
+  const [storedRange, setStoredRange] = useState<Range | null>(null);
+
+  const handleFinish = (text: string) => {
+    if (storedRange && editorRef.current) {
+      storedRange.deleteContents();
+      storedRange.insertNode(document.createTextNode(text));
+      setStoredRange(null);
+    }
+  };
 
   const execCmd = useCallback((cmd: string, value?: string) => {
     window.document.execCommand(cmd, false, value);
@@ -359,7 +370,14 @@ export function DocumentEditor({
 
         {/* Single animated tab button — slides with the panel */}
         <button
-          onClick={onToggleAiTool}
+          onClick={() => {
+            const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              setStoredRange(selection.getRangeAt(0).cloneRange());
+            }
+            const selected = selection?.toString() || '';
+            onToggleAiTool(selected);
+          }}
           className="absolute top-[80px] z-20 bg-[#303030] flex items-center gap-1 pl-[10px] pr-[12px] py-[8px] rounded-bl-[15px] rounded-tl-[15px] hover:bg-[#3a3a3a]"
           title={aiToolOpen ? "Close AI Tool" : "Open AI Tool"}
           style={{
@@ -410,7 +428,7 @@ export function DocumentEditor({
           }}
         >
           <div className="w-[370px] h-full">
-            <AiToolPanel onClose={onToggleAiTool} />
+            <AiToolPanel onClose={() => onToggleAiTool()} selectedText={selectedTextToPass} onFinish={handleFinish} />
           </div>
         </div>
       </div>
