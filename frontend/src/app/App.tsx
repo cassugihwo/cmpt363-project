@@ -149,8 +149,11 @@ export default function App() {
           document={activeDoc}
           aiToolOpen={aiToolOpen}
           onToggleAiTool={(selectedText?: string) => {
-            if (selectedText !== undefined && !aiToolOpen) setSelectedTextToPass(selectedText);
+            if (selectedText !== undefined/* && !aiToolOpen*/) setSelectedTextToPass(selectedText);
             setAiToolOpen((prev) => !prev);
+          }}
+          onSelection={(selectedText?: string) => {
+            if (selectedText !== undefined) setSelectedTextToPass(selectedText);
           }}
           onUpdateDocument={updateDocument}
           selectedTextToPass={selectedTextToPass}

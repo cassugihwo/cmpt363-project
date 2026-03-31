@@ -32,6 +32,7 @@ interface DocumentEditorProps {
   document: DocTab | null;
   aiToolOpen: boolean;
   onToggleAiTool: (selectedText?: string) => void;
+  onSelection: (selectedText?: string) => void;
   onUpdateDocument: (id: string, content: string) => void;
   selectedTextToPass: string;
 }
@@ -89,6 +90,7 @@ export function DocumentEditor({
   document: activeDoc,
   aiToolOpen,
   onToggleAiTool,
+  onSelection,
   onUpdateDocument,
   selectedTextToPass,
 }: DocumentEditorProps) {
@@ -156,6 +158,24 @@ export function DocumentEditor({
         .join("");
     }
   }, [activeDoc?.id]);
+
+  useEffect(() => {
+    const handleSelection = (event: any) => {
+      const selection = window.getSelection();
+            if (selection && selection.rangeCount > 0) {
+              setStoredRange(selection.getRangeAt(0).cloneRange());
+            }
+            const selected = selection?.toString() || '';
+            console.log("hi");
+            onSelection(selected);
+    };
+    if (editorRef && editorRef.current) {
+      editorRef.current.addEventListener('mouseup', handleSelection);
+      return () => {
+        editorRef.current?.removeEventListener('mouseup', handleSelection);
+      };
+    }
+  }, [editorRef]);
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-[#212121]">

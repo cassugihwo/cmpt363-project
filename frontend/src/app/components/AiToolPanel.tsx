@@ -279,8 +279,17 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   
   // Set selected text in output when provided and output is empty
   useEffect(() => {
-    if (selectedText && outputRef.current && outputRef.current.innerHTML.trim() === '') {
+    //Problem found: selectedText will not change as long as menu is open
+    // const handleClick = (event: MouseEvent) => {
+    //   if (selectedText && outputRef.current) {
+    //     outputRef.current.innerHTML = selectedText;
+    //   }
+    // }
+    // document.addEventListener('mousedown', handleClick);
+    if (selectedText && outputRef.current) {
       outputRef.current.innerHTML = selectedText;
+        
+        //return () => document.removeEventListener('mousedown', handleClick);
     }
   }, [selectedText]);
 
