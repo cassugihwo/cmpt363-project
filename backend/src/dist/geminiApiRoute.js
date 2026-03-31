@@ -95,12 +95,14 @@ router.get("/test-ai-cringe", function (req, res) { return __awaiter(void 0, voi
     });
 }); });
 router.post("/generate-slider", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, text, sliders, prompt, response, error_3;
+    var _a, text, sliders, includeAdvancedOptions, advancedOptions, prompt, response, error_3;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _a = req.body, text = _a.text, sliders = _a.sliders;
-                prompt = refineText_1.sliderPrompt[0] + "\n" + text + "\n" + refineText_1.sliderPrompt[1] + "\n" + JSON.stringify(sliders) + "\n" + refineText_1.sliderPrompt[2];
+                _a = req.body, text = _a.text, sliders = _a.sliders, includeAdvancedOptions = _a.includeAdvancedOptions, advancedOptions = _a.advancedOptions;
+                prompt = includeAdvancedOptions
+                    ? refineText_1.startPrompt + "\n" + refineText_1.sliderPrompt[0] + "\n" + JSON.stringify(sliders) + "\n" + refineText_1.additionalConfigPrompt + "\n" + JSON.stringify(advancedOptions) + "\n" + refineText_1.sliderPrompt[1] + "\n" + text + "\n" + refineText_1.sliderPrompt[2]
+                    : refineText_1.startPrompt + "\n" + refineText_1.sliderPrompt[0] + "\n" + JSON.stringify(sliders) + "\n" + refineText_1.sliderPrompt[1] + "\n" + text + "\n" + refineText_1.sliderPrompt[2];
                 _b.label = 1;
             case 1:
                 _b.trys.push([1, 3, , 4]);

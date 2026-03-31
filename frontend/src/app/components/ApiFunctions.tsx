@@ -17,6 +17,30 @@ import {
   Plus,
 } from "lucide-react";
 
+export interface SliderConfig {
+  id: string;
+  label: string;
+  level0: string;
+  level100: string;
+  value: number;
+}
+
+export interface Prompt {
+  id: string;
+  label: string;
+  userPrompt: string;
+}
+
+export interface AdvancedOptionsConfig {
+  minWords: number | null;
+  maxWords: number | null;
+  includeAllTheseWords: string;
+  includeTheseExactPhrases: string;
+  includeAnyOfTheseWords: string;
+  includeNoneOfTheseWords: string;
+  temperature: number;
+  useSpelling: boolean;
+}
 
 export function DebugFunctions(debugMode: number) {
   const [response, setResponse] = useState<string>("debug text");
@@ -61,19 +85,7 @@ export function DebugFunctions(debugMode: number) {
 }
 
 
-export interface SliderConfig {
-  id: string;
-  label: string;
-  level0: string;
-  level100: string;
-  value: number;
-}
 
-export interface Prompt {
-  id: string;
-  label: string;
-  userPrompt: string;
-}
 
 /**
  * TestSliderFunction --- prints current text and slider configurations
@@ -103,21 +115,35 @@ export function TestSliderFunction(text: string, sliders: SliderConfig[]): void 
  * SliderGenerate --- sends slider data to API
  * @param text -> current text in output text area
  * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
-export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<void> {
+export async function SliderGenerate(
+  text: string,
+  sliders: SliderConfig[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
   // Send API request
   try {
-    const response = await fetch("http://localhost:5000/api/gemini/generate-slider", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        sliders: sliders.map(({ id, ...rest }) => rest), // Exclude id from each slider
-      }),
-    });
-    
+    const response = await fetch(
+      "http://localhost:5000/api/gemini/generate-slider",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          sliders: sliders.map(({ id, ...rest }) => rest),
+          includeAdvancedOptions,
+          advancedOptions: filteredAdvancedOptions,
+        }),
+      }
+    );
+
     const result = await response.json();
     console.log("API Response (Slider) -----");
     console.log(result.message);
@@ -126,6 +152,7 @@ export async function SliderGenerate(text: string, sliders: SliderConfig[]): Pro
     console.error("API Error (Slider):", error);
   }
 }
+
 
 /**
  * TestPromptFunction --- prints current text and prompt configurations

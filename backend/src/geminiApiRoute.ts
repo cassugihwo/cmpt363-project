@@ -2,8 +2,10 @@ import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import {
   testPrompt,
+  startPrompt,
   sliderPrompt,
-  promptPrompt
+  promptPrompt,
+  additionalConfigPrompt,
 } from "./prompts/refineText";
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -46,8 +48,10 @@ router.get("/test-ai-cringe", async (req: Request, res: Response) => {
 });
 
 router.post("/generate-slider", async (req: Request, res: Response) => {
-  const {text, sliders} = req.body;
-  const prompt = `${sliderPrompt[0]}\n${text}\n${sliderPrompt[1]}\n${JSON.stringify(sliders)}\n${sliderPrompt[2]}`;
+  const {text, sliders, includeAdvancedOptions, advancedOptions} = req.body;
+  const prompt = includeAdvancedOptions
+    ? `${startPrompt}\n${sliderPrompt[0]}\n${JSON.stringify(sliders)}\n${additionalConfigPrompt}\n${JSON.stringify(advancedOptions)}\n${sliderPrompt[1]}\n${text}\n${sliderPrompt[2]}`
+    : `${startPrompt}\n${sliderPrompt[0]}\n${JSON.stringify(sliders)}\n${sliderPrompt[1]}\n${text}\n${sliderPrompt[2]}`;
 
   try {
     const response = await ai.models.generateContent({

@@ -123,6 +123,16 @@ var INITIAL_PROMPTS = [
         userPrompt: "Make the content more engaging and interesting."
     },
 ];
+var INITIAL_ADVANCED_OPTIONS = {
+    minWords: 0,
+    maxWords: 300,
+    includeAllTheseWords: "",
+    includeTheseExactPhrases: "",
+    includeAnyOfTheseWords: "",
+    includeNoneOfTheseWords: "",
+    temperature: 5,
+    useSpelling: false
+};
 /* ─── AI icon (pen + star) ─── */
 function AiIcon(_a) {
     var _b = _a.size, size = _b === void 0 ? 26 : _b;
@@ -141,15 +151,27 @@ function AiIcon(_a) {
 }
 /* ─── NumberField helper ─── */
 function NumberField(_a) {
-    var label = _a.label, value = _a.value, onChange = _a.onChange, _b = _a.readOnly, readOnly = _b === void 0 ? false : _b;
+    var label = _a.label, value = _a.value, onChange = _a.onChange, _b = _a.readOnly, readOnly = _b === void 0 ? false : _b, _c = _a.disabled, disabled = _c === void 0 ? false : _c;
+    var displayValue = value === null || value === undefined ? "" : String(value);
     return (react_1["default"].createElement("div", { className: "flex flex-col gap-1" },
         react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px]" }, label),
-        react_1["default"].createElement("div", { className: "flex items-center justify-between px-3 py-2 rounded-[6px] min-w-[90px] " + (readOnly ? "bg-transparent" : "bg-[#2A2A2A] border border-[#555]") },
-            react_1["default"].createElement("span", { className: "text-white text-[13px] font-medium" }, value),
+        react_1["default"].createElement("div", { className: "flex items-center justify-between px-3 py-2 rounded-[6px] min-w-[90px] " + (readOnly ? "bg-transparent" : "bg-[#2A2A2A] border border-[#555]") + " " + (disabled ? "opacity-50" : "") },
+            readOnly ? (react_1["default"].createElement("span", { className: "text-white text-[13px] font-medium" }, displayValue)) : (react_1["default"].createElement("input", { type: "number", value: displayValue, disabled: disabled, onChange: function (e) {
+                    var next = e.target.value;
+                    if (next === "") {
+                        onChange === null || onChange === void 0 ? void 0 : onChange(null);
+                    }
+                    else {
+                        var parsed = Number(next);
+                        if (!Number.isNaN(parsed)) {
+                            onChange === null || onChange === void 0 ? void 0 : onChange(parsed);
+                        }
+                    }
+                }, className: "bg-transparent text-white text-[13px] outline-none w-[45px]" })),
             !readOnly && (react_1["default"].createElement("div", { className: "flex flex-col gap-0.5 ml-2" },
-                react_1["default"].createElement("button", { onClick: function () { return onChange === null || onChange === void 0 ? void 0 : onChange(value + 1); }, className: "hover:opacity-70 transition-opacity leading-none" },
+                react_1["default"].createElement("button", { disabled: disabled, onClick: function () { return onChange === null || onChange === void 0 ? void 0 : onChange(value === null || value === undefined ? 1 : value + 1); }, className: "hover:opacity-70 transition-opacity leading-none disabled:opacity-50 disabled:cursor-not-allowed" },
                     react_1["default"].createElement(lucide_react_1.ChevronUp, { size: 12, color: "#A6A6A6" })),
-                react_1["default"].createElement("button", { onClick: function () { return onChange === null || onChange === void 0 ? void 0 : onChange(Math.max(0, value - 1)); }, className: "hover:opacity-70 transition-opacity leading-none" },
+                react_1["default"].createElement("button", { disabled: disabled, onClick: function () { return onChange === null || onChange === void 0 ? void 0 : onChange(value === null || value === undefined ? null : Math.max(0, value - 1)); }, className: "hover:opacity-70 transition-opacity leading-none disabled:opacity-50 disabled:cursor-not-allowed" },
                     react_1["default"].createElement(lucide_react_1.ChevronDown, { size: 12, color: "#A6A6A6" })))))));
 }
 function AiToolPanel(_a) {
@@ -170,16 +192,88 @@ function AiToolPanel(_a) {
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _m = react_1.useState(0), minWords = _m[0], setMinWords = _m[1];
-    var _o = react_1.useState(300), maxWords = _o[0], setMaxWords = _o[1];
-    var currentWords = 250;
-    var _p = react_1.useState(""), allWords = _p[0], setAllWords = _p[1];
-    var _q = react_1.useState(""), exactPhrase = _q[0], setExactPhrase = _q[1];
-    var _r = react_1.useState(""), anyWords = _r[0], setAnyWords = _r[1];
-    var _s = react_1.useState(""), noneWords = _s[0], setNoneWords = _s[1];
-    var _t = react_1.useState(5), temperature = _t[0], setTemperature = _t[1];
-    var _u = react_1.useState(false), useSpelling = _u[0], setUseSpelling = _u[1];
+    var _m = react_1.useState(250), currentWords = _m[0], setCurrentWords = _m[1];
+    var _o = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _o[0], setAdvancedOptionsConfig = _o[1];
+    var _p = react_1.useState(false), includeAdvancedOptions = _p[0], setIncludeAdvancedOptions = _p[1];
     var TICK_COUNT = 11; // 0 through 10
+    function AdvancedOptionsSection() {
+        return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
+            react_1["default"].createElement("button", { onClick: function () { return setAdvancedExpanded(!advancedExpanded); }, className: "flex items-center justify-between w-full hover:opacity-70 transition-opacity" },
+                react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[14px] font-semibold" }, "Advanced Options"),
+                react_1["default"].createElement(lucide_react_1.ChevronDown, { size: 16, color: "#898989", className: "transition-transform duration-200 " + (advancedExpanded ? 'rotate-180' : '') })),
+            advancedExpanded && (react_1["default"].createElement("div", { className: "mt-4 flex flex-col gap-5 pb-4 " + (!includeAdvancedOptions ? 'opacity-50' : '') },
+                react_1["default"].createElement("div", { className: "flex items-center" },
+                    react_1["default"].createElement("input", { type: "checkbox", id: "includeAdvancedOptions", checked: includeAdvancedOptions, onChange: function (e) { return setIncludeAdvancedOptions(e.target.checked); }, className: "mr-2" }),
+                    react_1["default"].createElement("label", { htmlFor: "includeAdvancedOptions", className: "text-[#E9E9E9] text-[13px]" }, "Include Advanced Options")),
+                react_1["default"].createElement("div", null,
+                    react_1["default"].createElement("h3", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Word Count"),
+                    react_1["default"].createElement("div", { className: "flex items-end gap-3" },
+                        react_1["default"].createElement(NumberField, { label: "Minimum", value: advancedOptionsConfig.minWords, disabled: !includeAdvancedOptions, onChange: function (value) {
+                                return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { minWords: value })); });
+                            } }),
+                        react_1["default"].createElement(NumberField, { label: "Current", value: currentWords, readOnly: true }),
+                        react_1["default"].createElement(NumberField, { label: "Maximum", value: advancedOptionsConfig.maxWords, disabled: !includeAdvancedOptions, onChange: function (value) {
+                                return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { maxWords: value })); });
+                            } }))),
+                react_1["default"].createElement("div", null,
+                    react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Include:"),
+                    react_1["default"].createElement("div", { className: "flex flex-col gap-2" }, [
+                        {
+                            ph: "All of these words...",
+                            val: advancedOptionsConfig.includeAllTheseWords,
+                            field: "includeAllTheseWords"
+                        },
+                        {
+                            ph: "This exact phrase...",
+                            val: advancedOptionsConfig.includeTheseExactPhrases,
+                            field: "includeTheseExactPhrases"
+                        },
+                        {
+                            ph: "Any of these words...",
+                            val: advancedOptionsConfig.includeAnyOfTheseWords,
+                            field: "includeAnyOfTheseWords"
+                        },
+                        {
+                            ph: "None of these words...",
+                            val: advancedOptionsConfig.includeNoneOfTheseWords,
+                            field: "includeNoneOfTheseWords"
+                        },
+                    ].map(function (_a) {
+                        var ph = _a.ph, val = _a.val, field = _a.field;
+                        return (react_1["default"].createElement("input", { key: ph, type: "text", placeholder: ph, value: val, disabled: !includeAdvancedOptions, onChange: function (e) {
+                                return setAdvancedOptionsConfig(function (prev) {
+                                    var _a;
+                                    return (__assign(__assign({}, prev), (_a = {}, _a[field] = e.target.value, _a)));
+                                });
+                            }, className: "w-full bg-[#2A2A2A] text-white text-[12px] placeholder-[#898989] px-3 py-2 rounded-[6px] outline-none border border-transparent focus:border-[#8149EC]/60 transition-colors disabled:opacity-50" }));
+                    }))),
+                react_1["default"].createElement("div", null,
+                    react_1["default"].createElement("div", { className: "flex items-center gap-2 mb-3" },
+                        react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Temperature"),
+                        react_1["default"].createElement("button", { disabled: !includeAdvancedOptions, className: "hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" },
+                            react_1["default"].createElement(lucide_react_1.HelpCircle, { size: 14, color: "#898989" }))),
+                    react_1["default"].createElement("div", { className: "relative" },
+                        react_1["default"].createElement("input", { type: "range", min: 0, max: 10, step: 1, value: advancedOptionsConfig.temperature, disabled: !includeAdvancedOptions, onChange: function (e) {
+                                return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { temperature: Number(e.target.value) })); });
+                            }, className: "adv-temp-slider w-full h-[3px] rounded-full appearance-none cursor-pointer mb-1 disabled:opacity-50 disabled:cursor-not-allowed", style: {
+                                background: "linear-gradient(to right, #E9E9E9 0%, #E9E9E9 " + advancedOptionsConfig.temperature * 10 + "%, #555 " + advancedOptionsConfig.temperature * 10 + "%, #555 100%)",
+                                WebkitAppearance: "none"
+                            } }),
+                        react_1["default"].createElement("div", { className: "flex justify-between px-0 mt-1" }, Array.from({ length: TICK_COUNT }).map(function (_, i) { return (react_1["default"].createElement("div", { key: i, className: "flex flex-col items-center" },
+                            react_1["default"].createElement("div", { className: "w-px h-[6px] bg-[#555]" }))); })),
+                        react_1["default"].createElement("div", { className: "flex justify-between mt-0.5" },
+                            react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "0"),
+                            react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "10")))),
+                react_1["default"].createElement("div", { className: "flex items-center justify-between" },
+                    react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Use document spelling and grammar"),
+                    react_1["default"].createElement("button", { disabled: !includeAdvancedOptions, onClick: function () {
+                            return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { useSpelling: !prev.useSpelling })); });
+                        }, className: "w-5 h-5 rounded-[4px] border-2 flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed " + (advancedOptionsConfig.useSpelling
+                            ? "bg-[#8149EC] border-[#8149EC]"
+                            : "bg-transparent border-[#898989] hover:border-[#A6A6A6]") }, advancedOptionsConfig.useSpelling && (react_1["default"].createElement("svg", { viewBox: "0 0 12 9", fill: "none", className: "w-3 h-3" },
+                        react_1["default"].createElement("path", { d: "M1 4L4.5 7.5L11 1", stroke: "white", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" })))))))));
+    }
+    ;
     var updateSlider = function (id, value) {
         setSliders(function (prev) { return prev.map(function (s) { return (s.id === id ? __assign(__assign({}, s), { value: value }) : s); }); });
     };
@@ -248,8 +342,16 @@ function AiToolPanel(_a) {
     }, [openMenuId]);
     // Set selected text in output when provided and output is empty
     react_1.useEffect(function () {
-        if (selectedText && outputRef.current && outputRef.current.innerHTML.trim() === '') {
+        //Problem found: selectedText will not change as long as menu is open
+        // const handleClick = (event: MouseEvent) => {
+        //   if (selectedText && outputRef.current) {
+        //     outputRef.current.innerHTML = selectedText;
+        //   }
+        // }
+        // document.addEventListener('mousedown', handleClick);
+        if (selectedText && outputRef.current) {
             outputRef.current.innerHTML = selectedText;
+            //return () => document.removeEventListener('mousedown', handleClick);
         }
     }, [selectedText]);
     return (react_1["default"].createElement(react_1["default"].Fragment, null,
@@ -298,14 +400,18 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-1 overflow-y-auto px-4 min-h-0" }, mode === "slider" ? (react_1["default"].createElement("div", { className: "flex flex-col gap-5 py-2" },
                     sliders.map(function (slider) { return (react_1["default"].createElement("div", { key: slider.id, className: "relative" },
                         react_1["default"].createElement("div", { className: "flex items-center justify-between mb-2" },
-                            react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[13px] font-medium" }, editingLabelId === slider.id ? (react_1["default"].createElement("input", { ref: labelInputRef, type: "text", value: tempLabelValue, onChange: function (e) { return setTempLabelValue(e.target.value); }, onKeyDown: handleLabelKeyDown, onBlur: finalizeLabelEdit, className: "bg-[#262626] text-[#E9E9E9] text-[13px] font-medium px-2 py-1 rounded-[4px] outline-none border border-[#555] focus:border-[#8149EC]/60 transition-colors" })) : (react_1["default"].createElement("span", { className: "cursor-pointer", onClick: function () {
+                            react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[13px] font-medium" }, editingLabelId === slider.id ? (react_1["default"].createElement("input", { ref: labelInputRef, type: "text", value: tempLabelValue, onChange: function (e) {
+                                    return setTempLabelValue(e.target.value);
+                                }, onKeyDown: handleLabelKeyDown, onBlur: finalizeLabelEdit, className: "bg-[#262626] text-[#E9E9E9] text-[13px] font-medium px-2 py-1 rounded-[4px] outline-none border border-[#555] focus:border-[#8149EC]/60 transition-colors" })) : (react_1["default"].createElement("span", { className: "cursor-pointer", onClick: function () {
                                     setEditingLabelId(slider.id);
                                     setTempLabelValue(slider.label);
                                     // Focus the input after render
                                     setTimeout(function () { var _a; return (_a = labelInputRef.current) === null || _a === void 0 ? void 0 : _a.focus(); }, 0);
                                 } }, slider.label))),
                             react_1["default"].createElement("div", { className: "relative" },
-                                react_1["default"].createElement("button", { onClick: function () { return setOpenMenuId(openMenuId === slider.id ? null : slider.id); }, className: "hover:opacity-70 transition-opacity" },
+                                react_1["default"].createElement("button", { onClick: function () {
+                                        return setOpenMenuId(openMenuId === slider.id ? null : slider.id);
+                                    }, className: "hover:opacity-70 transition-opacity" },
                                     react_1["default"].createElement(lucide_react_1.MoreVertical, { size: 14, color: "#898989" })),
                                 openMenuId === slider.id && (react_1["default"].createElement("div", { ref: menuRef, className: "absolute right-0 top-full mt-1 bg-[#262626] rounded-[6px] shadow-lg border border-[#555] py-1 z-10 min-w-[120px]" },
                                     react_1["default"].createElement("button", { onClick: function () {
@@ -317,63 +423,25 @@ function AiToolPanel(_a) {
                         react_1["default"].createElement("div", { className: "flex items-center justify-between text-[10px] text-[#898989] mb-1" },
                             react_1["default"].createElement("span", null, slider.level0),
                             react_1["default"].createElement("span", null, slider.level100)),
-                        react_1["default"].createElement("input", { type: "range", min: 0, max: 100, value: slider.value, onChange: function (e) { return updateSlider(slider.id, Number(e.target.value)); }, className: "w-full h-[3px] rounded-full appearance-none cursor-pointer", style: {
+                        react_1["default"].createElement("input", { type: "range", min: 0, max: 100, value: slider.value, onChange: function (e) {
+                                return updateSlider(slider.id, Number(e.target.value));
+                            }, className: "w-full h-[3px] rounded-full appearance-none cursor-pointer", style: {
                                 background: "linear-gradient(to right, #8149EC 0%, #8149EC " + slider.value + "%, #555 " + slider.value + "%, #555 100%)",
                                 WebkitAppearance: "none"
                             } }))); }),
                     react_1["default"].createElement("button", { onClick: addNewSlider, className: "flex items-center justify-center px-3 py-1 rounded-[12px] bg-[#303030] hover:bg-[#4a4a4a] transition-colors" },
                         react_1["default"].createElement(lucide_react_1.Plus, { size: 16, color: "#E9E9E9" })),
-                    react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
-                        react_1["default"].createElement("button", { onClick: function () { return setAdvancedExpanded(!advancedExpanded); }, className: "flex items-center justify-between w-full hover:opacity-70 transition-opacity" },
-                            react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[14px] font-semibold" }, "Advanced Options"),
-                            react_1["default"].createElement(lucide_react_1.ChevronDown, { size: 16, color: "#898989", className: "transition-transform duration-200 " + (advancedExpanded ? 'rotate-180' : '') })),
-                        advancedExpanded && (react_1["default"].createElement("div", { className: "mt-4 flex flex-col gap-5 pb-4" },
-                            react_1["default"].createElement("div", null,
-                                react_1["default"].createElement("h3", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Word Count"),
-                                react_1["default"].createElement("div", { className: "flex items-end gap-3" },
-                                    react_1["default"].createElement(NumberField, { label: "Minimum", value: minWords, onChange: setMinWords }),
-                                    react_1["default"].createElement(NumberField, { label: "Current", value: currentWords, readOnly: true }),
-                                    react_1["default"].createElement(NumberField, { label: "Maximum", value: maxWords, onChange: setMaxWords }))),
-                            react_1["default"].createElement("div", null,
-                                react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Include:"),
-                                react_1["default"].createElement("div", { className: "flex flex-col gap-2" }, [
-                                    { ph: "All of these words...", val: allWords, set: setAllWords },
-                                    { ph: "This exact phrase...", val: exactPhrase, set: setExactPhrase },
-                                    { ph: "Any of these words...", val: anyWords, set: setAnyWords },
-                                    { ph: "None of these words...", val: noneWords, set: setNoneWords },
-                                ].map(function (_a) {
-                                    var ph = _a.ph, val = _a.val, set = _a.set;
-                                    return (react_1["default"].createElement("input", { key: ph, type: "text", placeholder: ph, value: val, onChange: function (e) { return set(e.target.value); }, className: "w-full bg-[#2A2A2A] text-white text-[12px] placeholder-[#898989] px-3 py-2 rounded-[6px] outline-none border border-transparent focus:border-[#8149EC]/60 transition-colors" }));
-                                }))),
-                            react_1["default"].createElement("div", null,
-                                react_1["default"].createElement("div", { className: "flex items-center gap-2 mb-3" },
-                                    react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Temperature"),
-                                    react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
-                                        react_1["default"].createElement(lucide_react_1.HelpCircle, { size: 14, color: "#898989" }))),
-                                react_1["default"].createElement("div", { className: "relative" },
-                                    react_1["default"].createElement("input", { type: "range", min: 0, max: 10, step: 1, value: temperature, onChange: function (e) { return setTemperature(Number(e.target.value)); }, className: "adv-temp-slider w-full h-[3px] rounded-full appearance-none cursor-pointer mb-1", style: {
-                                            background: "linear-gradient(to right, #E9E9E9 0%, #E9E9E9 " + temperature * 10 + "%, #555 " + temperature * 10 + "%, #555 100%)",
-                                            WebkitAppearance: "none"
-                                        } }),
-                                    react_1["default"].createElement("div", { className: "flex justify-between px-0 mt-1" }, Array.from({ length: TICK_COUNT }).map(function (_, i) { return (react_1["default"].createElement("div", { key: i, className: "flex flex-col items-center" },
-                                        react_1["default"].createElement("div", { className: "w-px h-[6px] bg-[#555]" }))); })),
-                                    react_1["default"].createElement("div", { className: "flex justify-between mt-0.5" },
-                                        react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "0"),
-                                        react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "10")))),
-                            react_1["default"].createElement("div", { className: "flex items-center justify-between" },
-                                react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Use document spelling and grammar"),
-                                react_1["default"].createElement("button", { onClick: function () { return setUseSpelling(!useSpelling); }, className: "w-5 h-5 rounded-[4px] border-2 flex items-center justify-center flex-shrink-0 transition-colors " + (useSpelling
-                                        ? "bg-[#8149EC] border-[#8149EC]"
-                                        : "bg-transparent border-[#898989] hover:border-[#A6A6A6]") }, useSpelling && (react_1["default"].createElement("svg", { viewBox: "0 0 12 9", fill: "none", className: "w-3 h-3" },
-                                    react_1["default"].createElement("path", { d: "M1 4L4.5 7.5L11 1", stroke: "white", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" })))))))))) : (react_1["default"].createElement("div", { className: "flex flex-col gap-3 py-2" }, prompts.map(function (prompt) { return (react_1["default"].createElement("div", { key: prompt.id, className: "bg-[#262626] rounded-[8px] p-3" },
-                    react_1["default"].createElement("div", { className: "flex items-center justify-between mb-1" },
-                        react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px] font-medium" }, prompt.label),
-                        react_1["default"].createElement("div", { className: "flex items-center gap-2" },
-                            react_1["default"].createElement("button", { onClick: function () { return deletePrompt(prompt.id); }, className: "hover:opacity-70 transition-opacity" },
-                                react_1["default"].createElement(lucide_react_1.Trash2, { size: 13, color: "#E03030" })),
-                            react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
-                                react_1["default"].createElement(lucide_react_1.Pencil, { size: 13, color: "#898989" })))),
-                    react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[12px] leading-[1.5]" }, prompt.userPrompt))); })))),
+                    AdvancedOptionsSection())) : (react_1["default"].createElement("div", { className: "flex flex-col gap-3 py-2" },
+                    prompts.map(function (prompt) { return (react_1["default"].createElement("div", { key: prompt.id, className: "bg-[#262626] rounded-[8px] p-3" },
+                        react_1["default"].createElement("div", { className: "flex items-center justify-between mb-1" },
+                            react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px] font-medium" }, prompt.label),
+                            react_1["default"].createElement("div", { className: "flex items-center gap-2" },
+                                react_1["default"].createElement("button", { onClick: function () { return deletePrompt(prompt.id); }, className: "hover:opacity-70 transition-opacity" },
+                                    react_1["default"].createElement(lucide_react_1.Trash2, { size: 13, color: "#E03030" })),
+                                react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
+                                    react_1["default"].createElement(lucide_react_1.Pencil, { size: 13, color: "#3b3939" })))),
+                        react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[12px] leading-[1.5]" }, prompt.userPrompt))); }),
+                    AdvancedOptionsSection()))),
                 mode === "prompt" && (react_1["default"].createElement("div", { className: "px-4 py-3 flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "flex items-center bg-[#262626] rounded-full px-4 py-2 gap-3" },
                         react_1["default"].createElement("input", { ref: inputRef, type: "text", value: promptInput, onChange: function (e) { return setPromptInput(e.target.value); }, onKeyDown: handleKeyDown, placeholder: "How do you want to rewrite this?", className: "flex-1 bg-transparent text-[#E9E9E9] text-[12px] placeholder-[#898989] outline-none" }),
@@ -382,22 +450,21 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
-                        react_1["default"].createElement("button", { onClick: function () { var _a; return onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || ''); }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("button", { onClick: function () { var _a; return onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || ""); }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
                         react_1["default"].createElement("div", { className: "flex items-center gap-3" },
-                            mode === "slider" && (react_1["default"].createElement("button", { onClick: function () { return setShowAdvanced(true); }, className: "text-[#8149EC] text-[12px] font-medium hover:opacity-80 transition-opacity" }, "Advanced options")),
                             react_1["default"].createElement("button", { onClick: function () { return __awaiter(_this, void 0, void 0, function () {
                                     var _a, _b;
                                     return __generator(this, function (_c) {
                                         switch (_c.label) {
                                             case 0:
                                                 if (!(mode === "slider")) return [3 /*break*/, 2];
-                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || '', sliders)];
+                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "", sliders, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 1:
                                                 _c.sent();
                                                 return [3 /*break*/, 4];
                                             case 2:
                                                 if (!(mode === "prompt")) return [3 /*break*/, 4];
-                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_b = outputRef.current) === null || _b === void 0 ? void 0 : _b.innerHTML) || '', prompts)];
+                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_b = outputRef.current) === null || _b === void 0 ? void 0 : _b.innerHTML) || "", prompts)];
                                             case 3:
                                                 _c.sent();
                                                 _c.label = 4;
@@ -405,7 +472,7 @@ function AiToolPanel(_a) {
                                         }
                                     });
                                 }); }, className: "bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors" }, "Generate")))))),
-            activeTab === "create" && (react_1["default"].createElement(CreateTab, null)),
+            activeTab === "create" && react_1["default"].createElement(CreateTab, null),
             react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n        "))));
 }
 exports.AiToolPanel = AiToolPanel;

@@ -119,14 +119,19 @@ exports.TestSliderFunction = TestSliderFunction;
  * SliderGenerate --- sends slider data to API
  * @param text -> current text in output text area
  * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
-function SliderGenerate(text, sliders) {
+function SliderGenerate(text, sliders, advancedOptions, includeAdvancedOptions) {
     return __awaiter(this, void 0, Promise, function () {
-        var response, result, error_2;
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_2;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 3, , 4]);
+                    temperature = advancedOptions.temperature, useSpelling = advancedOptions.useSpelling, filteredAdvancedOptions = __rest(advancedOptions, ["temperature", "useSpelling"]);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
                     return [4 /*yield*/, fetch("http://localhost:5000/api/gemini/generate-slider", {
                             method: "POST",
                             headers: {
@@ -137,23 +142,25 @@ function SliderGenerate(text, sliders) {
                                 sliders: sliders.map(function (_a) {
                                     var id = _a.id, rest = __rest(_a, ["id"]);
                                     return rest;
-                                })
+                                }),
+                                includeAdvancedOptions: includeAdvancedOptions,
+                                advancedOptions: filteredAdvancedOptions
                             })
                         })];
-                case 1:
+                case 2:
                     response = _a.sent();
                     return [4 /*yield*/, response.json()];
-                case 2:
+                case 3:
                     result = _a.sent();
                     console.log("API Response (Slider) -----");
                     console.log(result.message);
                     console.log(result.prompt);
-                    return [3 /*break*/, 4];
-                case 3:
+                    return [3 /*break*/, 5];
+                case 4:
                     error_2 = _a.sent();
                     console.error("API Error (Slider):", error_2);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
             }
         });
     });
