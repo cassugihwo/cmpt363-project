@@ -166,7 +166,6 @@ export function DocumentEditor({
               setStoredRange(selection.getRangeAt(0).cloneRange());
             }
             const selected = selection?.toString() || '';
-            console.log("hi");
             onSelection(selected);
     };
     if (editorRef && editorRef.current) {

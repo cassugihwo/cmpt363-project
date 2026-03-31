@@ -104,7 +104,7 @@ export function TestSliderFunction(text: string, sliders: SliderConfig[]): void 
  * @param text -> current text in output text area
  * @param sliders -> array of current SliderConfig objects
  */
-export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<void> {
+export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch("http://localhost:5000/api/gemini/generate-slider", {
@@ -122,8 +122,10 @@ export async function SliderGenerate(text: string, sliders: SliderConfig[]): Pro
     console.log("API Response (Slider) -----");
     console.log(result.message);
     console.log(result.prompt);
+    return Promise.resolve(result.message);
   } catch (error) {
     console.error("API Error (Slider):", error);
+    return Promise.reject(-1);
   }
 }
 
@@ -156,7 +158,7 @@ export function TestPromptFunction(text: string, prompts: Prompt[]): void {
  * @param text -> current text in output text area
  * @param prompts -> array of current Prompt objects
  */
-export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<void> {
+export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch("http://localhost:5000/api/gemini/generate-prompt", {
@@ -174,8 +176,10 @@ export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<v
     console.log("API Response (Prompt) -----");
     console.log(result.message);
     console.log(result.prompt);
+    return Promise.resolve(result.message);
   } catch (error) {
     console.error("API Error (Prompt):", error);
+    return Promise.reject(-1);
   }
 }
 
