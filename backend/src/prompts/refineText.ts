@@ -5,7 +5,7 @@ export const testPrompt = "Write a haiku about Hu Tao from Genshin Impact.";
 export const sliderPrompt = [
   `I want some text to be rewritten.
 I am going to give you an array of 'sliders' describing the requirements of the rewritten text.
-Here is an example of a slider: {"label":"Tone","level0":"Casual","level100":"Professional","value":40}. What this slider means: if tone was a scale of 0 to 100, with Casual ("level0") at 0 and Professional ("level100") at 100, I would want the rewritten text to be rewritten at level 40 ("value")—in between Casual and Professional but leaning slightly towards Casual.
+Here is an example of a slider: {"label":"Tone","level0":"Casual","level100":"Professional","value":40}. What this slider means: if tone was a scale of 0 to 100, with Casual ("level0") at 0 and Professional ("level100") at 100, I would want the rewritten text to be rewritten at level 40 ("value")—in between Casual and Professional but leaning slightly towards Casual. Keep in mind this is just an example. Use the actual sliders I will provide later.
 
 Here is the text I want you to rewrite:`,
 
