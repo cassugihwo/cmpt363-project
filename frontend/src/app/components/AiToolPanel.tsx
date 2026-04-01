@@ -15,55 +15,13 @@ import {
 } from "./ApiFunctions";
 
 
-
-// TEST CODE FOR API /////////////////////////////////////////////////////////
-
-// 0 = no debug; 1 = debug mode 1; 2 = debug mode 2; etc...
-const debugMode: number = 1;
-
-function CreateTab() {
-
-  /* const [response, setResponse] = useState<string>("debug text");
-
-  const fetchData = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/gemini/test-ai");
-      const text = await res.text();
-      setResponse(text);
-    } catch (error) {
-      setResponse("Error fetching data");
-    }
-  }; */
-
-  const getHtml = () => {
-    switch (debugMode) {
-      case 1:
-        return DebugFunctions(1);
-      default:
-        return (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
-            <div className="w-14 h-14 rounded-full bg-[#262626] flex items-center justify-center">
-              <Wand2 size={24} color="#8149EC" />
-            </div>
-            <p className="text-white text-[15px] font-medium">Create</p>
-            <p className="text-[#898989] text-[13px] leading-[1.6]">
-              This feature is coming soon. You'll be able to generate new
-              content from scratch using AI.
-            </p>
-          </div>
-        );
-    }
-  };
-
-
-  return <>{getHtml()}</>;
-}
-
-// END TEST CODE FOR API /////////////////////////////////////////////////////
-
-
 interface AiToolPanelProps {
   onClose: () => void;
+  activeTab?: "rewrite" | "create";
+  onTabChange?: (tab: "rewrite" | "create") => void;
+  selectInsertionActive?: boolean;
+  onSelectInsertionToggle?: (active: boolean) => void;
+  insertedCharCount?: number;
   selectedText?: string;
   onFinish: (text: string) => void;
 }
@@ -160,6 +118,12 @@ function AiIcon({ size = 26 }: { size?: number }) {
   );
 }
 
+function WordsPerCharacter(characters: number) {
+  // ~ 5 characters per word
+  return Math.round(characters / 5);
+}
+
+
 /* ─── NumberField helper ─── */
 function NumberField({
   label,
@@ -232,9 +196,14 @@ function NumberField({
   );
 }
 
-export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProps) {
-
-  const [activeTab, setActiveTab] = useState<"rewrite" | "create">("rewrite");
+export function AiToolPanel({
+  onClose, activeTab, onTabChange,
+  selectedText,
+  onFinish,
+  selectInsertionActive = false,
+  onSelectInsertionToggle,
+  insertedCharCount = 0,
+}: AiToolPanelProps) {
   const [mode, setMode] = useState<"slider" | "prompt">("slider");
 
   // Prompts and Slider states
@@ -255,13 +224,19 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   const createOutputRef = useRef<HTMLDivElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  
+
   // Advanced options state
   const [currentWords, setCurrentWords] = useState(250);
-  const [advancedOptionsConfig, setAdvancedOptionsConfig] = useState<AdvancedOptionsConfig>(INITIAL_ADVANCED_OPTIONS);
+  const [advancedOptionsConfig, setAdvancedOptionsConfig] =
+    useState<AdvancedOptionsConfig>(INITIAL_ADVANCED_OPTIONS);
   const [includeAdvancedOptions, setIncludeAdvancedOptions] = useState(false);
+  const [toggleCreateAdvanced, setToggleCreateAdvanced] = useState(false);
 
   const TICK_COUNT = 11; // 0 through 10
+
+  React.useEffect(() => {
+    onTabChange?.(activeTab || "rewrite");
+  }, [activeTab, onTabChange]);
 
   function AdvancedOptionsSection() {
     return (
@@ -307,31 +282,83 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
               <h3 className="text-[#E9E9E9] text-[13px] font-medium mb-3">
                 Word Count
               </h3>
-              <div className="flex items-end gap-3">
-                <NumberField
-                  label="Minimum"
-                  value={advancedOptionsConfig.minWords}
-                  disabled={!includeAdvancedOptions}
-                  onChange={(value) =>
-                    setAdvancedOptionsConfig((prev) => ({
-                      ...prev,
-                      minWords: value,
-                    }))
-                  }
-                />
-                <NumberField label="Current" value={currentWords} readOnly />
-                <NumberField
-                  label="Maximum"
-                  value={advancedOptionsConfig.maxWords}
-                  disabled={!includeAdvancedOptions}
-                  onChange={(value) =>
-                    setAdvancedOptionsConfig((prev) => ({
-                      ...prev,
-                      maxWords: value,
-                    }))
-                  }
-                />
-              </div>
+              {/* Select space - Create only */}
+              {activeTab === "create" && (
+                <div className="mb-4">
+                  <button
+                    onClick={() =>
+                      onSelectInsertionToggle?.(!selectInsertionActive)
+                    }
+                    className="flex items-start gap-3 w-full text-left group"
+                  >
+                    {/* Checkbox */}
+                    <div
+                      className={`w-[15px] h-[15px] rounded-[3px] border-2 flex items-center justify-center flex-shrink-0 mt-[1px] transition-colors ${
+                        selectInsertionActive
+                          ? "bg-[#8149EC] border-[#8149EC]"
+                          : "bg-transparent border-[#898989] group-hover:border-[#A6A6A6]"
+                      }`}
+                    >
+                      {selectInsertionActive && (
+                        <svg
+                          viewBox="0 0 10 8"
+                          fill="none"
+                          className="w-[9px] h-[9px]"
+                        >
+                          <path
+                            d="M1 3.5L3.8 6.5L9 1"
+                            stroke="white"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="text-[#E9E9E9] text-[13px] leading-[1.4]">
+                      Select space in the document to insert generated text.
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {activeTab === "rewrite" ||
+              (activeTab === "create" && !selectInsertionActive) ? (
+                <div className="flex items-end gap-3">
+                  <NumberField
+                    label="Minimum"
+                    value={advancedOptionsConfig.minWords}
+                    disabled={!includeAdvancedOptions}
+                    onChange={(value) =>
+                      setAdvancedOptionsConfig((prev) => ({
+                        ...prev,
+                        minWords: value,
+                      }))
+                    }
+                  />
+                  <NumberField label="Current" value={currentWords} readOnly />
+                  <NumberField
+                    label="Maximum"
+                    value={advancedOptionsConfig.maxWords}
+                    disabled={!includeAdvancedOptions}
+                    onChange={(value) =>
+                      setAdvancedOptionsConfig((prev) => ({
+                        ...prev,
+                        maxWords: value,
+                      }))
+                    }
+                  />
+                </div>
+              ) : (
+                <div>
+                  {/* Character count */}
+                  <p className="text-[#9E9E9E] text-[13px] mt-1.5 ml-[27px]">
+                    {selectInsertionActive
+                      ? `Around ${WordsPerCharacter(insertedCharCount)} words (${insertedCharCount} character${insertedCharCount !== 1 ? "s" : ""}) will be generated to fill the selected space.`
+                      : ""}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Include section */}
@@ -381,7 +408,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             </div>
 
             {/* Temperature */}
-            <div>
+            {/* <div>
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-[#E9E9E9] text-[13px] font-medium">
                   Temperature
@@ -394,7 +421,6 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                 </button>
               </div>
 
-              {/* Slider */}
               <div className="relative">
                 <input
                   type="range"
@@ -415,7 +441,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                     WebkitAppearance: "none",
                   }}
                 />
-                {/* Tick marks */}
+
                 <div className="flex justify-between px-0 mt-1">
                   {Array.from({ length: TICK_COUNT }).map((_, i) => (
                     <div key={i} className="flex flex-col items-center">
@@ -423,16 +449,16 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                     </div>
                   ))}
                 </div>
-                {/* Labels */}
+                
                 <div className="flex justify-between mt-0.5">
                   <span className="text-[#898989] text-[10px]">0</span>
                   <span className="text-[#898989] text-[10px]">10</span>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             {/* Spelling and grammar */}
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <p className="text-[#E9E9E9] text-[13px] font-medium">
                 Use document spelling and grammar
               </p>
@@ -462,12 +488,12 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   </svg>
                 )}
               </button>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
     );
-  };
+  }
 
   const updateSlider = (id: string, value: number) => {
     setSliders((prev) => prev.map((s) => (s.id === id ? { ...s, value } : s)));
@@ -558,21 +584,21 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
     };
 
     if (openMenuId) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [openMenuId]);
-  
+
   // Set selected text in output when provided and output is empty
   useEffect(() => {
-
-    if (selectedText && outputRef.current && generatedText === '') {
+    if (selectedText && outputRef.current && generatedText === "") {
       outputRef.current.innerHTML = selectedText;
     }
   }, [selectedText]);
 
   useEffect(() => {
-    if (outputRef.current && !(generatedText === '')) {
+    if (outputRef.current && !(generatedText === "")) {
       outputRef.current.innerHTML = generatedText;
     }
   }, [generatedText]);
@@ -591,7 +617,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
           <div className="flex items-center gap-3 mb-3">
             <AiIcon size={26} />
             <button
-              onClick={() => setActiveTab("rewrite")}
+              onClick={() => onTabChange?.("rewrite")}
               className={`px-3 py-1 rounded-full text-[13px] transition-colors ${
                 activeTab === "rewrite"
                   ? "bg-[#3a3a3a] text-[#E9E9E9]"
@@ -601,7 +627,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
               Rewrite
             </button>
             <button
-              onClick={() => setActiveTab("create")}
+              onClick={() => onTabChange?.("create")}
               className={`px-3 py-1 rounded-full text-[13px] transition-colors ${
                 activeTab === "create"
                   ? "bg-[#3a3a3a] text-[#E9E9E9]"
@@ -1055,7 +1081,13 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
-                <button className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors">
+                <button
+                  onClick={() => {
+                    setGeneratedText("");
+                    onFinish(outputRef.current?.innerHTML || "");
+                  }}
+                  className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
+                >
                   Finish
                 </button>
                 <button className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">

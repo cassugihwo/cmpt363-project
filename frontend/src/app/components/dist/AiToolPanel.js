@@ -59,35 +59,6 @@ var react_1 = require("react");
 var lucide_react_1 = require("lucide-react");
 var AdvancedOptionsModal_1 = require("./AdvancedOptionsModal");
 var ApiFunctions_1 = require("./ApiFunctions");
-// TEST CODE FOR API /////////////////////////////////////////////////////////
-// 0 = no debug; 1 = debug mode 1; 2 = debug mode 2; etc...
-var debugMode = 1;
-function CreateTab() {
-    /* const [response, setResponse] = useState<string>("debug text");
-  
-    const fetchData = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/gemini/test-ai");
-        const text = await res.text();
-        setResponse(text);
-      } catch (error) {
-        setResponse("Error fetching data");
-      }
-    }; */
-    var getHtml = function () {
-        switch (debugMode) {
-            case 1:
-                return ApiFunctions_1.DebugFunctions(1);
-            default:
-                return (react_1["default"].createElement("div", { className: "flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center" },
-                    react_1["default"].createElement("div", { className: "w-14 h-14 rounded-full bg-[#262626] flex items-center justify-center" },
-                        react_1["default"].createElement(lucide_react_1.Wand2, { size: 24, color: "#8149EC" })),
-                    react_1["default"].createElement("p", { className: "text-white text-[15px] font-medium" }, "Create"),
-                    react_1["default"].createElement("p", { className: "text-[#898989] text-[13px] leading-[1.6]" }, "This feature is coming soon. You'll be able to generate new content from scratch using AI.")));
-        }
-    };
-    return react_1["default"].createElement(react_1["default"].Fragment, null, getHtml());
-}
 var INITIAL_SLIDERS = [
     {
         id: "tone",
@@ -157,6 +128,10 @@ function AiIcon(_a) {
             react_1["default"].createElement("svg", { viewBox: "0 0 10.38 11.44", fill: "none", className: "w-full h-full" },
                 react_1["default"].createElement("path", { d: "M5.04404 0.116448C5.07897 -0.0388164 5.30022 -0.0388156 5.33516 0.116449L5.47808 0.751671C6.01834 3.15282 7.88355 5.03389 10.28 5.59447C10.4123 5.6254 10.4123 5.81363 10.28 5.84456C7.88355 6.40514 6.01834 8.28621 5.47808 10.6874L5.33516 11.3226C5.30022 11.4778 5.07897 11.4778 5.04404 11.3226L4.90111 10.6874C4.36086 8.28621 2.49565 6.40514 0.0991709 5.84456C-0.0330572 5.81363 -0.0330569 5.6254 0.0991712 5.59447C2.49565 5.03389 4.36086 3.15282 4.90111 0.75167L5.04404 0.116448Z", fill: "#8149EC" })))));
 }
+function WordsPerCharacter(characters) {
+    // ~ 5 characters per word
+    return Math.round(characters / 5);
+}
 /* ─── NumberField helper ─── */
 function NumberField(_a) {
     var label = _a.label, value = _a.value, onChange = _a.onChange, _b = _a.readOnly, readOnly = _b === void 0 ? false : _b, _c = _a.disabled, disabled = _c === void 0 ? false : _c;
@@ -184,31 +159,34 @@ function NumberField(_a) {
 }
 function AiToolPanel(_a) {
     var _this = this;
-    var onClose = _a.onClose, selectedText = _a.selectedText, onFinish = _a.onFinish;
-    var _b = react_1.useState("rewrite"), activeTab = _b[0], setActiveTab = _b[1];
-    var _c = react_1.useState("slider"), mode = _c[0], setMode = _c[1];
+    var onClose = _a.onClose, activeTab = _a.activeTab, onTabChange = _a.onTabChange, selectedText = _a.selectedText, onFinish = _a.onFinish, _b = _a.selectInsertionActive, selectInsertionActive = _b === void 0 ? false : _b, onSelectInsertionToggle = _a.onSelectInsertionToggle, _c = _a.insertedCharCount, insertedCharCount = _c === void 0 ? 0 : _c;
+    var _d = react_1.useState("slider"), mode = _d[0], setMode = _d[1];
     // Prompts and Slider states
-    var _d = react_1.useState(INITIAL_SLIDERS), sliders = _d[0], setSliders = _d[1];
-    var _e = react_1.useState(INITIAL_PROMPTS), prompts = _e[0], setPrompts = _e[1];
-    var _f = react_1.useState(""), promptInput = _f[0], setPromptInput = _f[1];
-    var _g = react_1.useState([]), createPrompts = _g[0], setCreatePrompts = _g[1];
-    var _h = react_1.useState(""), createPromptInput = _h[0], setCreatePromptInput = _h[1];
-    var _j = react_1.useState(false), showAdvanced = _j[0], setShowAdvanced = _j[1];
-    var _k = react_1.useState(false), advancedExpanded = _k[0], setAdvancedExpanded = _k[1];
-    var _l = react_1.useState(null), editingLabelId = _l[0], setEditingLabelId = _l[1];
-    var _m = react_1.useState(""), tempLabelValue = _m[0], setTempLabelValue = _m[1];
-    var _o = react_1.useState(""), generatedText = _o[0], setGeneratedText = _o[1];
-    var _p = react_1.useState(null), openMenuId = _p[0], setOpenMenuId = _p[1];
+    var _e = react_1.useState(INITIAL_SLIDERS), sliders = _e[0], setSliders = _e[1];
+    var _f = react_1.useState(INITIAL_PROMPTS), prompts = _f[0], setPrompts = _f[1];
+    var _g = react_1.useState(""), promptInput = _g[0], setPromptInput = _g[1];
+    var _h = react_1.useState([]), createPrompts = _h[0], setCreatePrompts = _h[1];
+    var _j = react_1.useState(""), createPromptInput = _j[0], setCreatePromptInput = _j[1];
+    var _k = react_1.useState(false), showAdvanced = _k[0], setShowAdvanced = _k[1];
+    var _l = react_1.useState(false), advancedExpanded = _l[0], setAdvancedExpanded = _l[1];
+    var _m = react_1.useState(null), editingLabelId = _m[0], setEditingLabelId = _m[1];
+    var _o = react_1.useState(""), tempLabelValue = _o[0], setTempLabelValue = _o[1];
+    var _p = react_1.useState(""), generatedText = _p[0], setGeneratedText = _p[1];
+    var _q = react_1.useState(null), openMenuId = _q[0], setOpenMenuId = _q[1];
     var inputRef = react_1.useRef(null);
     var outputRef = react_1.useRef(null);
     var createOutputRef = react_1.useRef(null);
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _q = react_1.useState(250), currentWords = _q[0], setCurrentWords = _q[1];
-    var _r = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _r[0], setAdvancedOptionsConfig = _r[1];
-    var _s = react_1.useState(false), includeAdvancedOptions = _s[0], setIncludeAdvancedOptions = _s[1];
+    var _r = react_1.useState(250), currentWords = _r[0], setCurrentWords = _r[1];
+    var _s = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _s[0], setAdvancedOptionsConfig = _s[1];
+    var _t = react_1.useState(false), includeAdvancedOptions = _t[0], setIncludeAdvancedOptions = _t[1];
+    var _u = react_1.useState(false), toggleCreateAdvanced = _u[0], setToggleCreateAdvanced = _u[1];
     var TICK_COUNT = 11; // 0 through 10
+    react_1["default"].useEffect(function () {
+        onTabChange === null || onTabChange === void 0 ? void 0 : onTabChange(activeTab || "rewrite");
+    }, [activeTab, onTabChange]);
     function AdvancedOptionsSection() {
         return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
             react_1["default"].createElement("button", { onClick: function () { return setAdvancedExpanded(!advancedExpanded); }, className: "flex items-center justify-between w-full hover:opacity-70 transition-opacity" },
@@ -220,14 +198,25 @@ function AiToolPanel(_a) {
                     react_1["default"].createElement("label", { htmlFor: "includeAdvancedOptions", className: "text-[#E9E9E9] text-[13px]" }, "Include Advanced Options")),
                 react_1["default"].createElement("div", null,
                     react_1["default"].createElement("h3", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Word Count"),
-                    react_1["default"].createElement("div", { className: "flex items-end gap-3" },
+                    activeTab === "create" && (react_1["default"].createElement("div", { className: "mb-4" },
+                        react_1["default"].createElement("button", { onClick: function () { return onSelectInsertionToggle === null || onSelectInsertionToggle === void 0 ? void 0 : onSelectInsertionToggle(!selectInsertionActive); }, className: "flex items-start gap-3 w-full text-left group" },
+                            react_1["default"].createElement("div", { className: "w-[15px] h-[15px] rounded-[3px] border-2 flex items-center justify-center flex-shrink-0 mt-[1px] transition-colors " + (selectInsertionActive
+                                    ? "bg-[#8149EC] border-[#8149EC]"
+                                    : "bg-transparent border-[#898989] group-hover:border-[#A6A6A6]") }, selectInsertionActive && (react_1["default"].createElement("svg", { viewBox: "0 0 10 8", fill: "none", className: "w-[9px] h-[9px]" },
+                                react_1["default"].createElement("path", { d: "M1 3.5L3.8 6.5L9 1", stroke: "white", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" })))),
+                            react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[13px] leading-[1.4]" }, "Select space in the document to insert generated text.")))),
+                    activeTab === "rewrite" ||
+                        (activeTab === "create" && !selectInsertionActive) ? (react_1["default"].createElement("div", { className: "flex items-end gap-3" },
                         react_1["default"].createElement(NumberField, { label: "Minimum", value: advancedOptionsConfig.minWords, disabled: !includeAdvancedOptions, onChange: function (value) {
                                 return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { minWords: value })); });
                             } }),
                         react_1["default"].createElement(NumberField, { label: "Current", value: currentWords, readOnly: true }),
                         react_1["default"].createElement(NumberField, { label: "Maximum", value: advancedOptionsConfig.maxWords, disabled: !includeAdvancedOptions, onChange: function (value) {
                                 return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { maxWords: value })); });
-                            } }))),
+                            } }))) : (react_1["default"].createElement("div", null,
+                        react_1["default"].createElement("p", { className: "text-[#9E9E9E] text-[13px] mt-1.5 ml-[27px]" }, selectInsertionActive
+                            ? "Around " + WordsPerCharacter(insertedCharCount) + " words (" + insertedCharCount + " character" + (insertedCharCount !== 1 ? "s" : "") + ") will be generated to fill the selected space."
+                            : "")))),
                 react_1["default"].createElement("div", null,
                     react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Include:"),
                     react_1["default"].createElement("div", { className: "flex flex-col gap-2" }, [
@@ -259,34 +248,8 @@ function AiToolPanel(_a) {
                                     return (__assign(__assign({}, prev), (_a = {}, _a[field] = e.target.value, _a)));
                                 });
                             }, className: "w-full bg-[#2A2A2A] text-white text-[12px] placeholder-[#898989] px-3 py-2 rounded-[6px] outline-none border border-transparent focus:border-[#8149EC]/60 transition-colors disabled:opacity-50" }));
-                    }))),
-                react_1["default"].createElement("div", null,
-                    react_1["default"].createElement("div", { className: "flex items-center gap-2 mb-3" },
-                        react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Temperature"),
-                        react_1["default"].createElement("button", { disabled: !includeAdvancedOptions, className: "hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" },
-                            react_1["default"].createElement(lucide_react_1.HelpCircle, { size: 14, color: "#898989" }))),
-                    react_1["default"].createElement("div", { className: "relative" },
-                        react_1["default"].createElement("input", { type: "range", min: 0, max: 10, step: 1, value: advancedOptionsConfig.temperature, disabled: !includeAdvancedOptions, onChange: function (e) {
-                                return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { temperature: Number(e.target.value) })); });
-                            }, className: "adv-temp-slider w-full h-[3px] rounded-full appearance-none cursor-pointer mb-1 disabled:opacity-50 disabled:cursor-not-allowed", style: {
-                                background: "linear-gradient(to right, #E9E9E9 0%, #E9E9E9 " + advancedOptionsConfig.temperature * 10 + "%, #555 " + advancedOptionsConfig.temperature * 10 + "%, #555 100%)",
-                                WebkitAppearance: "none"
-                            } }),
-                        react_1["default"].createElement("div", { className: "flex justify-between px-0 mt-1" }, Array.from({ length: TICK_COUNT }).map(function (_, i) { return (react_1["default"].createElement("div", { key: i, className: "flex flex-col items-center" },
-                            react_1["default"].createElement("div", { className: "w-px h-[6px] bg-[#555]" }))); })),
-                        react_1["default"].createElement("div", { className: "flex justify-between mt-0.5" },
-                            react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "0"),
-                            react_1["default"].createElement("span", { className: "text-[#898989] text-[10px]" }, "10")))),
-                react_1["default"].createElement("div", { className: "flex items-center justify-between" },
-                    react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Use document spelling and grammar"),
-                    react_1["default"].createElement("button", { disabled: !includeAdvancedOptions, onClick: function () {
-                            return setAdvancedOptionsConfig(function (prev) { return (__assign(__assign({}, prev), { useSpelling: !prev.useSpelling })); });
-                        }, className: "w-5 h-5 rounded-[4px] border-2 flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed " + (advancedOptionsConfig.useSpelling
-                            ? "bg-[#8149EC] border-[#8149EC]"
-                            : "bg-transparent border-[#898989] hover:border-[#A6A6A6]") }, advancedOptionsConfig.useSpelling && (react_1["default"].createElement("svg", { viewBox: "0 0 12 9", fill: "none", className: "w-3 h-3" },
-                        react_1["default"].createElement("path", { d: "M1 4L4.5 7.5L11 1", stroke: "white", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" })))))))));
+                    })))))));
     }
-    ;
     var updateSlider = function (id, value) {
         setSliders(function (prev) { return prev.map(function (s) { return (s.id === id ? __assign(__assign({}, s), { value: value }) : s); }); });
     };
@@ -367,18 +330,20 @@ function AiToolPanel(_a) {
             }
         };
         if (openMenuId) {
-            document.addEventListener('mousedown', handleClickOutside);
-            return function () { return document.removeEventListener('mousedown', handleClickOutside); };
+            document.addEventListener("mousedown", handleClickOutside);
+            return function () {
+                return document.removeEventListener("mousedown", handleClickOutside);
+            };
         }
     }, [openMenuId]);
     // Set selected text in output when provided and output is empty
     react_1.useEffect(function () {
-        if (selectedText && outputRef.current && generatedText === '') {
+        if (selectedText && outputRef.current && generatedText === "") {
             outputRef.current.innerHTML = selectedText;
         }
     }, [selectedText]);
     react_1.useEffect(function () {
-        if (outputRef.current && !(generatedText === '')) {
+        if (outputRef.current && !(generatedText === "")) {
             outputRef.current.innerHTML = generatedText;
         }
     }, [generatedText]);
@@ -388,10 +353,10 @@ function AiToolPanel(_a) {
             react_1["default"].createElement("div", { className: "px-4 pt-4 pb-3 flex-shrink-0" },
                 react_1["default"].createElement("div", { className: "flex items-center gap-3 mb-3" },
                     react_1["default"].createElement(AiIcon, { size: 26 }),
-                    react_1["default"].createElement("button", { onClick: function () { return setActiveTab("rewrite"); }, className: "px-3 py-1 rounded-full text-[13px] transition-colors " + (activeTab === "rewrite"
+                    react_1["default"].createElement("button", { onClick: function () { return onTabChange === null || onTabChange === void 0 ? void 0 : onTabChange("rewrite"); }, className: "px-3 py-1 rounded-full text-[13px] transition-colors " + (activeTab === "rewrite"
                             ? "bg-[#3a3a3a] text-[#E9E9E9]"
                             : "text-[#898989] hover:text-[#A6A6A6]") }, "Rewrite"),
-                    react_1["default"].createElement("button", { onClick: function () { return setActiveTab("create"); }, className: "px-3 py-1 rounded-full text-[13px] transition-colors " + (activeTab === "create"
+                    react_1["default"].createElement("button", { onClick: function () { return onTabChange === null || onTabChange === void 0 ? void 0 : onTabChange("create"); }, className: "px-3 py-1 rounded-full text-[13px] transition-colors " + (activeTab === "create"
                             ? "bg-[#3a3a3a] text-[#E9E9E9]"
                             : "text-[#898989] hover:text-[#A6A6A6]") }, "Create")),
                 react_1["default"].createElement("div", { className: "h-px bg-[#898989]/40 mb-3" }),
@@ -564,7 +529,11 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
-                        react_1["default"].createElement("button", { className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("button", { onClick: function () {
+                                var _a;
+                                setGeneratedText("");
+                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
+                            }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
                         react_1["default"].createElement("button", { className: "bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors" }, "Generate"))))),
             react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          .create-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n        "))));
 }
