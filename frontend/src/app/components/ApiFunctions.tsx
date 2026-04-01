@@ -205,6 +205,7 @@ export async function SliderGenerate(
 ): Promise<void> {
   const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
 
+export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch(
@@ -227,8 +228,10 @@ export async function SliderGenerate(
     console.log("API Response (Slider) -----");
     console.log(result.message);
     console.log(result.prompt);
+    return Promise.resolve(result.message);
   } catch (error) {
     console.error("API Error (Slider):", error);
+    return Promise.reject(-1);
   }
 }
 
@@ -273,6 +276,7 @@ export async function PromptGenerate(
 ): Promise<void> {
   const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
 
+export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch(
@@ -295,8 +299,10 @@ export async function PromptGenerate(
     console.log("API Response (Prompt) -----");
     console.log(result.message);
     console.log(result.prompt);
+    return Promise.resolve(result.message);
   } catch (error) {
     console.error("API Error (Prompt):", error);
+    return Promise.reject(-1);
   }
 }
 

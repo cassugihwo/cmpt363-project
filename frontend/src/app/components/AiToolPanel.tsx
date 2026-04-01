@@ -234,6 +234,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [tempLabelValue, setTempLabelValue] = useState("");
+  const [generatedText, setGeneratedText] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
@@ -530,19 +531,17 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   
   // Set selected text in output when provided and output is empty
   useEffect(() => {
-    //Problem found: selectedText will not change as long as menu is open
-    // const handleClick = (event: MouseEvent) => {
-    //   if (selectedText && outputRef.current) {
-    //     outputRef.current.innerHTML = selectedText;
-    //   }
-    // }
-    // document.addEventListener('mousedown', handleClick);
-    if (selectedText && outputRef.current) {
+
+    if (selectedText && outputRef.current && generatedText === '') {
       outputRef.current.innerHTML = selectedText;
-        
-        //return () => document.removeEventListener('mousedown', handleClick);
     }
   }, [selectedText]);
+
+  useEffect(() => {
+    if (outputRef.current && !(generatedText === '')) {
+      outputRef.current.innerHTML = generatedText;
+    }
+  }, [generatedText]);
 
   return (
     <>
@@ -831,6 +830,11 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
               <div className="flex items-center justify-between px-4 py-3">
                 <button
                   onClick={() => onFinish(outputRef.current?.innerHTML || "")}
+                <button 
+                  onClick={() => {
+                    setGeneratedText("");
+                    onFinish(outputRef.current?.innerHTML || '');
+                  }}
                   className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
                 >
                   Finish
@@ -845,6 +849,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                           advancedOptionsConfig,
                           includeAdvancedOptions,
                         );
+                        setGeneratedText(await SliderGenerate(outputRef.current?.innerHTML || '', sliders));
                       } else if (mode === "prompt") {
                         await PromptGenerate(
                           outputRef.current?.innerHTML || "",
