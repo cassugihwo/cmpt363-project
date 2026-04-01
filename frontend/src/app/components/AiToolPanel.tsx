@@ -1,7 +1,18 @@
 import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Trash2, Pencil, Wand2, HelpCircle, ChevronUp, Plus } from 'lucide-react';
 import { AdvancedOptionsModal } from "./AdvancedOptionsModal";
-import { DebugFunctions, SliderGenerate, PromptGenerate, TestSliderFunction, TestPromptFunction, type SliderConfig, type Prompt } from "./ApiFunctions";
+import { 
+  DebugFunctions, 
+  DebugFunction0,
+  DebugFunction1,
+  SliderGenerate, 
+  PromptGenerate, 
+  TestSliderFunction, 
+  TestPromptFunction, 
+  type SliderConfig,
+  type Prompt,
+  type AdvancedOptionsConfig
+} from "./ApiFunctions";
 
 
 
@@ -51,8 +62,6 @@ function CreateTab() {
 // END TEST CODE FOR API /////////////////////////////////////////////////////
 
 
-
-
 interface AiToolPanelProps {
   onClose: () => void;
   selectedText?: string;
@@ -62,26 +71,27 @@ interface AiToolPanelProps {
 const INITIAL_SLIDERS: SliderConfig[] = [
   {
     id: "tone",
-    label: "Tone",
-    level0: "Casual",
-    level100: "Professional",
+    label: "Professionalism",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
   {
     id: "detail",
-    label: "Detail",
-    level0: "Concise",
-    level100: "Detailed",
+    label: "Complexity",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
   {
-    id: "clarity",
-    label: "Clarity",
-    level0: "Natural",
-    level100: "Very Clear",
+    id: "emotion",
+    label: "Emotion",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
 ];
+
 
 const INITIAL_PROMPTS: Prompt[] = [
   {
@@ -95,6 +105,17 @@ const INITIAL_PROMPTS: Prompt[] = [
     userPrompt: "Make the content more engaging and interesting.",
   },
 ];
+
+const INITIAL_ADVANCED_OPTIONS: AdvancedOptionsConfig = {
+  minWords: 0,
+  maxWords: 300,
+  includeAllWords: "",
+  includeExactPhrases: "",
+  includeAnyWords: "",
+  includeNoneWords: "",
+  temperature: 5,
+  useSpelling: false,
+};
 
 /* ─── AI icon (pen + star) ─── */
 function AiIcon({ size = 26 }: { size?: number }) {
@@ -136,32 +157,62 @@ function NumberField({
   value,
   onChange,
   readOnly = false,
+  disabled = false,
 }: {
   label: string;
-  value: number;
-  onChange?: (v: number) => void;
+  value: number | null;
+  onChange?: (v: number | null) => void;
   readOnly?: boolean;
+  disabled?: boolean;
 }) {
+  const displayValue = value === null || value === undefined ? "" : String(value);
+
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[#A6A6A6] text-[11px]">{label}</span>
       <div
         className={`flex items-center justify-between px-3 py-2 rounded-[6px] min-w-[90px] ${
           readOnly ? "bg-transparent" : "bg-[#2A2A2A] border border-[#555]"
-        }`}
+        } ${disabled ? "opacity-50" : ""}`}
       >
-        <span className="text-white text-[13px] font-medium">{value}</span>
+        {readOnly ? (
+          <span className="text-white text-[13px] font-medium">{displayValue}</span>
+        ) : (
+          <input
+            type="number"
+            value={displayValue}
+            disabled={disabled}
+            onChange={(e) => {
+              const next = e.target.value;
+              if (next === "") {
+                onChange?.(null);
+              } else {
+                const parsed = Number(next);
+                if (!Number.isNaN(parsed)) {
+                  onChange?.(parsed);
+                }
+              }
+            }}
+            className="bg-transparent text-white text-[13px] outline-none w-[45px]"
+          />
+        )}
         {!readOnly && (
           <div className="flex flex-col gap-0.5 ml-2">
             <button
-              onClick={() => onChange?.(value + 1)}
-              className="hover:opacity-70 transition-opacity leading-none"
+              disabled={disabled}
+              onClick={() => onChange?.(value === null || value === undefined ? 1 : value + 1)}
+              className="hover:opacity-70 transition-opacity leading-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronUp size={12} color="#A6A6A6" />
             </button>
             <button
-              onClick={() => onChange?.(Math.max(0, value - 1))}
-              className="hover:opacity-70 transition-opacity leading-none"
+              disabled={disabled}
+              onClick={() =>
+                onChange?.(
+                  value === null || value === undefined ? null : Math.max(0, value - 1),
+                )
+              }
+              className="hover:opacity-70 transition-opacity leading-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronDown size={12} color="#A6A6A6" />
             </button>
@@ -191,17 +242,217 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   const menuRef = useRef<HTMLDivElement>(null);
   
   // Advanced options state
-  const [minWords, setMinWords] = useState(0);
-  const [maxWords, setMaxWords] = useState(300);
-  const currentWords = 250;
-  const [allWords, setAllWords] = useState("");
-  const [exactPhrase, setExactPhrase] = useState("");
-  const [anyWords, setAnyWords] = useState("");
-  const [noneWords, setNoneWords] = useState("");
-  const [temperature, setTemperature] = useState(5);
-  const [useSpelling, setUseSpelling] = useState(false);
+  const [currentWords, setCurrentWords] = useState(250);
+  const [advancedOptionsConfig, setAdvancedOptionsConfig] = useState<AdvancedOptionsConfig>(INITIAL_ADVANCED_OPTIONS);
+  const [includeAdvancedOptions, setIncludeAdvancedOptions] = useState(false);
 
   const TICK_COUNT = 11; // 0 through 10
+
+  function AdvancedOptionsSection() {
+    return (
+      <div className="border-t border-[#555] pt-4 mt-1">
+        <button
+          onClick={() => setAdvancedExpanded(!advancedExpanded)}
+          className="flex items-center justify-between w-full hover:opacity-70 transition-opacity"
+        >
+          <span className="text-[#E9E9E9] text-[14px] font-semibold">
+            Advanced Options
+          </span>
+          <ChevronDown
+            size={16}
+            color="#898989"
+            className={`transition-transform duration-200 ${
+              advancedExpanded ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {advancedExpanded && (
+          <div
+            className={`mt-4 flex flex-col gap-5 pb-4 ${!includeAdvancedOptions ? "opacity-50" : ""}`}
+          >
+            {/* Enable Advanced Options */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="includeAdvancedOptions"
+                checked={includeAdvancedOptions}
+                onChange={(e) => setIncludeAdvancedOptions(e.target.checked)}
+                className="mr-2"
+              />
+              <label
+                htmlFor="includeAdvancedOptions"
+                className="text-[#E9E9E9] text-[13px]"
+              >
+                Include Advanced Options
+              </label>
+            </div>
+            {/* Word Count section */}
+            <div>
+              <h3 className="text-[#E9E9E9] text-[13px] font-medium mb-3">
+                Word Count
+              </h3>
+              <div className="flex items-end gap-3">
+                <NumberField
+                  label="Minimum"
+                  value={advancedOptionsConfig.minWords}
+                  disabled={!includeAdvancedOptions}
+                  onChange={(value) =>
+                    setAdvancedOptionsConfig((prev) => ({
+                      ...prev,
+                      minWords: value,
+                    }))
+                  }
+                />
+                <NumberField label="Current" value={currentWords} readOnly />
+                <NumberField
+                  label="Maximum"
+                  value={advancedOptionsConfig.maxWords}
+                  disabled={!includeAdvancedOptions}
+                  onChange={(value) =>
+                    setAdvancedOptionsConfig((prev) => ({
+                      ...prev,
+                      maxWords: value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Include section */}
+            <div>
+              <p className="text-[#E9E9E9] text-[13px] font-medium mb-3">
+                Include:
+              </p>
+              <div className="flex flex-col gap-2">
+                {[
+                  {
+                    ph: "All of these words...",
+                    val: advancedOptionsConfig.includeAllWords,
+                    field: "includeAllWords",
+                  },
+                  {
+                    ph: "This exact phrase...",
+                    val: advancedOptionsConfig.includeExactPhrases,
+                    field: "includeExactPhrases",
+                  },
+                  {
+                    ph: "Any of these words...",
+                    val: advancedOptionsConfig.includeAnyWords,
+                    field: "includeAnyWords",
+                  },
+                  {
+                    ph: "None of these words...",
+                    val: advancedOptionsConfig.includeNoneWords,
+                    field: "includeNoneWords",
+                  },
+                ].map(({ ph, val, field }) => (
+                  <input
+                    key={ph}
+                    type="text"
+                    placeholder={ph}
+                    value={val}
+                    disabled={!includeAdvancedOptions}
+                    onChange={(e) =>
+                      setAdvancedOptionsConfig((prev) => ({
+                        ...prev,
+                        [field]: e.target.value,
+                      }))
+                    }
+                    className="w-full bg-[#2A2A2A] text-white text-[12px] placeholder-[#898989] px-3 py-2 rounded-[6px] outline-none border border-transparent focus:border-[#8149EC]/60 transition-colors disabled:opacity-50"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Temperature */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-[#E9E9E9] text-[13px] font-medium">
+                  Temperature
+                </p>
+                <button
+                  disabled={!includeAdvancedOptions}
+                  className="hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HelpCircle size={14} color="#898989" />
+                </button>
+              </div>
+
+              {/* Slider */}
+              <div className="relative">
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={advancedOptionsConfig.temperature}
+                  disabled={!includeAdvancedOptions}
+                  onChange={(e) =>
+                    setAdvancedOptionsConfig((prev) => ({
+                      ...prev,
+                      temperature: Number(e.target.value),
+                    }))
+                  }
+                  className="adv-temp-slider w-full h-[3px] rounded-full appearance-none cursor-pointer mb-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{
+                    background: `linear-gradient(to right, #E9E9E9 0%, #E9E9E9 ${advancedOptionsConfig.temperature * 10}%, #555 ${advancedOptionsConfig.temperature * 10}%, #555 100%)`,
+                    WebkitAppearance: "none",
+                  }}
+                />
+                {/* Tick marks */}
+                <div className="flex justify-between px-0 mt-1">
+                  {Array.from({ length: TICK_COUNT }).map((_, i) => (
+                    <div key={i} className="flex flex-col items-center">
+                      <div className="w-px h-[6px] bg-[#555]" />
+                    </div>
+                  ))}
+                </div>
+                {/* Labels */}
+                <div className="flex justify-between mt-0.5">
+                  <span className="text-[#898989] text-[10px]">0</span>
+                  <span className="text-[#898989] text-[10px]">10</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Spelling and grammar */}
+            <div className="flex items-center justify-between">
+              <p className="text-[#E9E9E9] text-[13px] font-medium">
+                Use document spelling and grammar
+              </p>
+              <button
+                disabled={!includeAdvancedOptions}
+                onClick={() =>
+                  setAdvancedOptionsConfig((prev) => ({
+                    ...prev,
+                    useSpelling: !prev.useSpelling,
+                  }))
+                }
+                className={`w-5 h-5 rounded-[4px] border-2 flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  advancedOptionsConfig.useSpelling
+                    ? "bg-[#8149EC] border-[#8149EC]"
+                    : "bg-transparent border-[#898989] hover:border-[#A6A6A6]"
+                }`}
+              >
+                {advancedOptionsConfig.useSpelling && (
+                  <svg viewBox="0 0 12 9" fill="none" className="w-3 h-3">
+                    <path
+                      d="M1 4L4.5 7.5L11 1"
+                      stroke="white"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const updateSlider = (id: string, value: number) => {
     setSliders((prev) => prev.map((s) => (s.id === id ? { ...s, value } : s)));
@@ -340,7 +591,10 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                     mode === "slider" ? "bg-[#303030]" : "hover:bg-[#303030]/50"
                   }`}
                 >
-                  <Sliders size={16} color={mode === "slider" ? "#E9E9E9" : "#898989"} />
+                  <Sliders
+                    size={16}
+                    color={mode === "slider" ? "#E9E9E9" : "#898989"}
+                  />
                 </button>
                 <button
                   onClick={() => setMode("prompt")}
@@ -348,7 +602,10 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                     mode === "prompt" ? "bg-[#303030]" : "hover:bg-[#303030]/50"
                   }`}
                 >
-                  <MessageSquare size={16} color={mode === "prompt" ? "#E9E9E9" : "#898989"} />
+                  <MessageSquare
+                    size={16}
+                    color={mode === "prompt" ? "#E9E9E9" : "#898989"}
+                  />
                 </button>
               </div>
               <div className="flex items-center gap-3">
@@ -422,7 +679,9 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                               ref={labelInputRef}
                               type="text"
                               value={tempLabelValue}
-                              onChange={(e) => setTempLabelValue(e.target.value)}
+                              onChange={(e) =>
+                                setTempLabelValue(e.target.value)
+                              }
                               onKeyDown={handleLabelKeyDown}
                               onBlur={finalizeLabelEdit}
                               className="bg-[#262626] text-[#E9E9E9] text-[13px] font-medium px-2 py-1 rounded-[4px] outline-none border border-[#555] focus:border-[#8149EC]/60 transition-colors"
@@ -434,7 +693,10 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                                 setEditingLabelId(slider.id);
                                 setTempLabelValue(slider.label);
                                 // Focus the input after render
-                                setTimeout(() => labelInputRef.current?.focus(), 0);
+                                setTimeout(
+                                  () => labelInputRef.current?.focus(),
+                                  0,
+                                );
                               }}
                             >
                               {slider.label}
@@ -443,12 +705,16 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                         </span>
                         <div className="relative">
                           <button
-                            onClick={() => setOpenMenuId(openMenuId === slider.id ? null : slider.id)}
+                            onClick={() =>
+                              setOpenMenuId(
+                                openMenuId === slider.id ? null : slider.id,
+                              )
+                            }
                             className="hover:opacity-70 transition-opacity"
                           >
                             <MoreVertical size={14} color="#898989" />
                           </button>
-                          
+
                           {/* Dropdown Menu */}
                           {openMenuId === slider.id && (
                             <div
@@ -478,7 +744,9 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                         min={0}
                         max={100}
                         value={slider.value}
-                        onChange={(e) => updateSlider(slider.id, Number(e.target.value))}
+                        onChange={(e) =>
+                          updateSlider(slider.id, Number(e.target.value))
+                        }
                         className="w-full h-[3px] rounded-full appearance-none cursor-pointer"
                         style={{
                           background: `linear-gradient(to right, #8149EC 0%, #8149EC ${slider.value}%, #555 ${slider.value}%, #555 100%)`,
@@ -487,7 +755,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                       />
                     </div>
                   ))}
-                  
+
                   {/* Add New Slider Button */}
                   <button
                     onClick={addNewSlider}
@@ -497,131 +765,15 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   </button>
 
                   {/* Advanced Options Expandable Section */}
-                  <div className="border-t border-[#555] pt-4 mt-1">
-                    <button
-                      onClick={() => setAdvancedExpanded(!advancedExpanded)}
-                      className="flex items-center justify-between w-full hover:opacity-70 transition-opacity"
-                    >
-                      <span className="text-[#E9E9E9] text-[14px] font-semibold">
-                        Advanced Options
-                      </span>
-                      <ChevronDown
-                        size={16}
-                        color="#898989"
-                        className={`transition-transform duration-200 ${
-                          advancedExpanded ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </button>
-                    
-                    {advancedExpanded && (
-                      <div className="mt-4 flex flex-col gap-5 pb-4">
-                        {/* Word Count section */}
-                        <div>
-                          <h3 className="text-[#E9E9E9] text-[13px] font-medium mb-3">Word Count</h3>
-                          <div className="flex items-end gap-3">
-                            <NumberField label="Minimum" value={minWords} onChange={setMinWords} />
-                            <NumberField label="Current" value={currentWords} readOnly />
-                            <NumberField label="Maximum" value={maxWords} onChange={setMaxWords} />
-                          </div>
-                        </div>
-
-                        {/* Include section */}
-                        <div>
-                          <p className="text-[#E9E9E9] text-[13px] font-medium mb-3">Include:</p>
-                          <div className="flex flex-col gap-2">
-                            {[
-                              { ph: "All of these words...", val: allWords, set: setAllWords },
-                              { ph: "This exact phrase...", val: exactPhrase, set: setExactPhrase },
-                              { ph: "Any of these words...", val: anyWords, set: setAnyWords },
-                              { ph: "None of these words...", val: noneWords, set: setNoneWords },
-                            ].map(({ ph, val, set }) => (
-                              <input
-                                key={ph}
-                                type="text"
-                                placeholder={ph}
-                                value={val}
-                                onChange={(e) => set(e.target.value)}
-                                className="w-full bg-[#2A2A2A] text-white text-[12px] placeholder-[#898989] px-3 py-2 rounded-[6px] outline-none border border-transparent focus:border-[#8149EC]/60 transition-colors"
-                              />
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Temperature */}
-                        <div>
-                          <div className="flex items-center gap-2 mb-3">
-                            <p className="text-[#E9E9E9] text-[13px] font-medium">Temperature</p>
-                            <button className="hover:opacity-70 transition-opacity">
-                              <HelpCircle size={14} color="#898989" />
-                            </button>
-                          </div>
-
-                          {/* Slider */}
-                          <div className="relative">
-                            <input
-                              type="range"
-                              min={0}
-                              max={10}
-                              step={1}
-                              value={temperature}
-                              onChange={(e) => setTemperature(Number(e.target.value))}
-                              className="adv-temp-slider w-full h-[3px] rounded-full appearance-none cursor-pointer mb-1"
-                              style={{
-                                background: `linear-gradient(to right, #E9E9E9 0%, #E9E9E9 ${temperature * 10}%, #555 ${temperature * 10}%, #555 100%)`,
-                                WebkitAppearance: "none",
-                              }}
-                            />
-                            {/* Tick marks */}
-                            <div className="flex justify-between px-0 mt-1">
-                              {Array.from({ length: TICK_COUNT }).map((_, i) => (
-                                <div key={i} className="flex flex-col items-center">
-                                  <div className="w-px h-[6px] bg-[#555]" />
-                                </div>
-                              ))}
-                            </div>
-                            {/* Labels */}
-                            <div className="flex justify-between mt-0.5">
-                              <span className="text-[#898989] text-[10px]">0</span>
-                              <span className="text-[#898989] text-[10px]">10</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Spelling and grammar */}
-                        <div className="flex items-center justify-between">
-                          <p className="text-[#E9E9E9] text-[13px] font-medium">
-                            Use document spelling and grammar
-                          </p>
-                          <button
-                            onClick={() => setUseSpelling(!useSpelling)}
-                            className={`w-5 h-5 rounded-[4px] border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
-                              useSpelling
-                                ? "bg-[#8149EC] border-[#8149EC]"
-                                : "bg-transparent border-[#898989] hover:border-[#A6A6A6]"
-                            }`}
-                          >
-                            {useSpelling && (
-                              <svg viewBox="0 0 12 9" fill="none" className="w-3 h-3">
-                                <path
-                                  d="M1 4L4.5 7.5L11 1"
-                                  stroke="white"
-                                  strokeWidth="1.8"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {AdvancedOptionsSection()}
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 py-2">
                   {prompts.map((prompt) => (
-                    <div key={prompt.id} className="bg-[#262626] rounded-[8px] p-3">
+                    <div
+                      key={prompt.id}
+                      className="bg-[#262626] rounded-[8px] p-3"
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-[#A6A6A6] text-[11px] font-medium">
                           {prompt.label}
@@ -634,7 +786,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                             <Trash2 size={13} color="#E03030" />
                           </button>
                           <button className="hover:opacity-70 transition-opacity">
-                            <Pencil size={13} color="#898989" />
+                            <Pencil size={13} color="#3b3939" />
                           </button>
                         </div>
                       </div>
@@ -643,6 +795,8 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                       </p>
                     </div>
                   ))}
+                  {/* Advanced Options Expandable Section */}
+                  {AdvancedOptionsSection()}
                 </div>
               )}
             </div>
@@ -674,6 +828,8 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
+                <button
+                  onClick={() => onFinish(outputRef.current?.innerHTML || "")}
                 <button 
                   onClick={() => {
                     setGeneratedText("");
@@ -684,20 +840,23 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   Finish
                 </button>
                 <div className="flex items-center gap-3">
-                  {mode === "slider" && (
-                    <button
-                      onClick={() => setShowAdvanced(true)}
-                      className="text-[#8149EC] text-[12px] font-medium hover:opacity-80 transition-opacity"
-                    >
-                      Advanced options
-                    </button>
-                  )}
-                  <button 
+                  <button
                     onClick={async () => {
                       if (mode === "slider") {
+                        await SliderGenerate(
+                          outputRef.current?.innerHTML || "",
+                          sliders,
+                          advancedOptionsConfig,
+                          includeAdvancedOptions,
+                        );
                         setGeneratedText(await SliderGenerate(outputRef.current?.innerHTML || '', sliders));
                       } else if (mode === "prompt") {
-                        await PromptGenerate(outputRef.current?.innerHTML || '', prompts);
+                        await PromptGenerate(
+                          outputRef.current?.innerHTML || "",
+                          prompts,
+                          advancedOptionsConfig,
+                          includeAdvancedOptions,
+                        );
                       }
                     }}
                     className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors"
@@ -711,9 +870,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
         )}
 
         {/* ── CREATE TAB — placeholder ── */}
-        {activeTab === "create" && (
-          <CreateTab/>
-        )}
+        {activeTab === "create" && <CreateTab />}
 
         {/* Slider thumb styling */}
         <style>{`

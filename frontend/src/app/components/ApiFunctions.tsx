@@ -17,6 +17,30 @@ import {
   Plus,
 } from "lucide-react";
 
+export interface SliderConfig {
+  id: string;
+  label: string;
+  level0: string;
+  level100: string;
+  value: number;
+}
+
+export interface Prompt {
+  id: string;
+  label: string;
+  userPrompt: string;
+}
+
+export interface AdvancedOptionsConfig {
+  minWords: number | null;
+  maxWords: number | null;
+  includeAllWords: string;
+  includeExactPhrases: string;
+  includeAnyWords: string;
+  includeNoneWords: string;
+  temperature: number;
+  useSpelling: boolean;
+}
 
 export function DebugFunctions(debugMode: number) {
   const [response, setResponse] = useState<string>("debug text");
@@ -61,19 +85,86 @@ export function DebugFunctions(debugMode: number) {
 }
 
 
-export interface SliderConfig {
-  id: string;
-  label: string;
-  level0: string;
-  level100: string;
-  value: number;
+/**
+ * DebugFunction0 --- sends slider data to API
+ * @param text -> current text in output text area
+ * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+export async function DebugFunction0(
+  text: string,
+  sliders: SliderConfig[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
+  // Send API request
+  try {
+    const response = await fetch("http://localhost:5000/api/debugSlider", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        sliders: sliders.map(({ id, ...rest }) => rest),
+        includeAdvancedOptions,
+        advancedOptions: filteredAdvancedOptions,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("API Response (DebugSlider) -----");
+    console.log(result.message);
+    console.log(result.prompt);
+  } catch (error) {
+    console.error("API Error (DebugSlider):", error);
+  }
 }
 
-export interface Prompt {
-  id: string;
-  label: string;
-  userPrompt: string;
+/**
+ * DebugFunction1 --- sends prompt data to API
+ * @param text -> current text in output text area
+ * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+export async function DebugFunction1(
+  text: string,
+  prompts: Prompt[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
+  // Send API request
+  try {
+    const response = await fetch("http://localhost:5000/api/debugPrompts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })),
+        includeAdvancedOptions,
+        advancedOptions: filteredAdvancedOptions,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("API Response (DebugPrompts) -----");
+    console.log(result.message);
+    console.log(result.prompt);
+  } catch (error) {
+    console.error("API Error (DebugPrompts):", error);
+  }
 }
+
+
+
 
 /**
  * TestSliderFunction --- prints current text and slider configurations
@@ -103,21 +194,36 @@ export function TestSliderFunction(text: string, sliders: SliderConfig[]): void 
  * SliderGenerate --- sends slider data to API
  * @param text -> current text in output text area
  * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
+export async function SliderGenerate(
+  text: string,
+  sliders: SliderConfig[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
 export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<string> {
   // Send API request
   try {
-    const response = await fetch("http://localhost:5000/api/gemini/generate-slider", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text,
-        sliders: sliders.map(({ id, ...rest }) => rest), // Exclude id from each slider
-      }),
-    });
-    
+    const response = await fetch(
+      "http://localhost:5000/api/gemini/generate-slider",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          sliders: sliders.map(({ id, ...rest }) => rest),
+          includeAdvancedOptions,
+          advancedOptions: filteredAdvancedOptions,
+        }),
+      }
+    );
+
     const result = await response.json();
     console.log("API Response (Slider) -----");
     console.log(result.message);
@@ -128,6 +234,8 @@ export async function SliderGenerate(text: string, sliders: SliderConfig[]): Pro
     return Promise.reject(-1);
   }
 }
+
+
 
 /**
  * TestPromptFunction --- prints current text and prompt configurations
@@ -157,21 +265,36 @@ export function TestPromptFunction(text: string, prompts: Prompt[]): void {
  * PromptGenerate --- sends prompt data to API
  * @param text -> current text in output text area
  * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
+export async function PromptGenerate(
+  text: string,
+  prompts: Prompt[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
 export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<string> {
   // Send API request
   try {
-    const response = await fetch("http://localhost:5000/api/gemini/generate-prompt", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "http://localhost:5000/api/gemini/generate-prompt",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })), // Only include userPrompt
+          includeAdvancedOptions,
+          advancedOptions: filteredAdvancedOptions,
+        }),
       },
-      body: JSON.stringify({
-        text,
-        prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })), // Only include userPrompt
-      }),
-    });
-    
+    );
+
     const result = await response.json();
     console.log("API Response (Prompt) -----");
     console.log(result.message);

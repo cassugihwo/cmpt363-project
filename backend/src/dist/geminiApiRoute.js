@@ -95,12 +95,23 @@ router.get("/test-ai-cringe", function (req, res) { return __awaiter(void 0, voi
     });
 }); });
 router.post("/generate-slider", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, text, sliders, prompt, response, error_3;
+    var _a, text, sliders, includeAdvancedOptions, advancedOptions, sliderText, advancedConfigText, prompt, response, error_3;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _a = req.body, text = _a.text, sliders = _a.sliders;
-                prompt = refineText_1.sliderPrompt[0] + "\n" + text + "\n" + refineText_1.sliderPrompt[1] + "\n" + JSON.stringify(sliders) + "\n" + refineText_1.sliderPrompt[2];
+                _a = req.body, text = _a.text, sliders = _a.sliders, includeAdvancedOptions = _a.includeAdvancedOptions, advancedOptions = _a.advancedOptions;
+                sliderText = "";
+                if (Array.isArray(sliders)) {
+                    sliderText = sliders
+                        .map(function (slider, index) {
+                        return "- " + slider.label + " at " + slider.value + " on the scale";
+                    })
+                        .join("\n");
+                }
+                advancedConfigText = refineText_1.buildAdvancedConfigText(advancedOptions, includeAdvancedOptions);
+                prompt = refineText_1.startPrompt + "\n" + refineText_1.sliderPrompt[0] +
+                    sliderText +
+                    ("\n" + advancedConfigText + "\n" + refineText_1.sliderPrompt[1] + "\n" + text + "\n" + refineText_1.sliderPrompt[2]);
                 _b.label = 1;
             case 1:
                 _b.trys.push([1, 3, , 4]);
@@ -122,12 +133,21 @@ router.post("/generate-slider", function (req, res) { return __awaiter(void 0, v
     });
 }); });
 router.post("/generate-prompt", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, text, prompts, prompt, response, error_4;
+    var _a, text, prompts, includeAdvancedOptions, advancedOptions, promptText, advancedConfigText, prompt, response, error_4;
     return __generator(this, function (_b) {
         switch (_b.label) {
             case 0:
-                _a = req.body, text = _a.text, prompts = _a.prompts;
-                prompt = refineText_1.promptPrompt[0] + "\n" + text + "\n" + refineText_1.promptPrompt[1] + "\n" + JSON.stringify(prompts) + "\n" + refineText_1.promptPrompt[2];
+                _a = req.body, text = _a.text, prompts = _a.prompts, includeAdvancedOptions = _a.includeAdvancedOptions, advancedOptions = _a.advancedOptions;
+                promptText = "";
+                if (Array.isArray(prompts)) {
+                    promptText = prompts
+                        .map(function (prompt, index) { return "- \"" + prompt.userPrompt + "\""; })
+                        .join("\n");
+                }
+                advancedConfigText = refineText_1.buildAdvancedConfigText(advancedOptions, includeAdvancedOptions);
+                prompt = refineText_1.startPrompt + "\n" + refineText_1.promptPrompt[0] +
+                    promptText +
+                    ("\n" + advancedConfigText + "\n" + refineText_1.promptPrompt[1] + "\n" + text + "\n" + refineText_1.promptPrompt[2]);
                 _b.label = 1;
             case 1:
                 _b.trys.push([1, 3, , 4]);

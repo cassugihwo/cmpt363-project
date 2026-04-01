@@ -2,8 +2,11 @@ import { Router, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
 import {
   testPrompt,
+  startPrompt,
   sliderPrompt,
-  promptPrompt
+  promptPrompt,
+  additionalConfigPrompt,
+  buildAdvancedConfigText,
 } from "./prompts/refineText";
 
 const geminiApiKey = process.env.GEMINI_API_KEY;
@@ -46,8 +49,23 @@ router.get("/test-ai-cringe", async (req: Request, res: Response) => {
 });
 
 router.post("/generate-slider", async (req: Request, res: Response) => {
-  const {text, sliders} = req.body;
-  const prompt = `${sliderPrompt[0]}\n${text}\n${sliderPrompt[1]}\n${JSON.stringify(sliders)}\n${sliderPrompt[2]}`;
+  const {text, sliders, includeAdvancedOptions, advancedOptions} = req.body;
+  let sliderText = "";
+  if (Array.isArray(sliders)) {
+    sliderText = sliders
+      .map(
+        (slider: any, index: number) =>
+          `- ${slider.label} at ${slider.value} on the scale`,
+      )
+      .join("\n");
+  }
+
+  const advancedConfigText = buildAdvancedConfigText(advancedOptions, includeAdvancedOptions);
+
+  const prompt =
+    `${startPrompt}\n${sliderPrompt[0]}` +
+    sliderText +
+    `\n${advancedConfigText}\n${sliderPrompt[1]}\n${text}\n${sliderPrompt[2]}`;
 
   try {
     const response = await ai.models.generateContent({
@@ -62,9 +80,26 @@ router.post("/generate-slider", async (req: Request, res: Response) => {
 });
 
 router.post("/generate-prompt", async (req: Request, res: Response) => {
-  const { text, prompts } = req.body;
-  const prompt = `${promptPrompt[0]}\n${text}\n${promptPrompt[1]}\n${JSON.stringify(prompts)}\n${promptPrompt[2]}`;
+  const { text, prompts, includeAdvancedOptions, advancedOptions } = req.body;
 
+  let promptText = "";
+  if (Array.isArray(prompts)) {
+    promptText = prompts
+      .map((prompt: any, index: number) => `- "${prompt.userPrompt}"`)
+      .join("\n");
+  }
+
+  const advancedConfigText = buildAdvancedConfigText(
+    advancedOptions,
+    includeAdvancedOptions,
+  );
+
+  const prompt =
+    `${startPrompt}\n${promptPrompt[0]}` +
+    promptText +
+    `\n${advancedConfigText}\n${promptPrompt[1]}\n${text}\n${promptPrompt[2]}`;
+
+  
   try {
     const response = await ai.models.generateContent({
       model: model_flash_lite,
