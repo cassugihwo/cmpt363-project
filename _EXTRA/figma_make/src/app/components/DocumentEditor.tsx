@@ -17,6 +17,9 @@ import {
   Plus,
   ChevronUp,
   Baseline,
+  Check,
+  Trash2,
+  ChevronRight,
 } from "lucide-react";
 import { AiToolPanel } from "./AiToolPanel";
 import { MenuBar } from "./MenuBar";
@@ -33,6 +36,8 @@ interface DocumentEditorProps {
   aiToolOpen: boolean;
   onToggleAiTool: () => void;
   onUpdateDocument: (id: string, content: string) => void;
+  aiToolActiveTab: "rewrite" | "create";
+  onAiToolTabChange: (tab: "rewrite" | "create") => void;
 }
 
 const SAMPLE_CONTENT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nunc arcu, laoreet ut ornare ut, condimentum scelerisque nisl. Nunc vel quam eu ligula facilisis consectetur id non est. Aenean maximus ac lacus id blandit. Etiam feugiat ligula et hendrerit mollis. Proin ut lacus orci. In imperdiet nulla sed magna ullamcorper, ac maximus elit eleifend. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus egestas, mi quis efficitur aliquam, tellus diam eleifend enim, vitae lacinia nisi libero a tellus. Sed vulputate bibendum velit nec rhoncus. Fusce pulvinar tempor diam sit amet ornare. Cras aliquet varius purus, ut congue lacus gravida ac. Nullam cursus scelerisque auctor. Etiam sit amet ornare sapien. Aenean quis posuere justo.
@@ -89,6 +94,8 @@ export function DocumentEditor({
   aiToolOpen,
   onToggleAiTool,
   onUpdateDocument,
+  aiToolActiveTab,
+  onAiToolTabChange,
 }: DocumentEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState(16);
@@ -100,6 +107,23 @@ export function DocumentEditor({
   const [isItalic, setIsItalic] = useState(false);
   const [isUnderline, setIsUnderline] = useState(false);
   const [alignment, setAlignment] = useState<"left" | "center" | "right">("left");
+  
+  // Floating button state
+  const [showFloatingButton, setShowFloatingButton] = useState(false);
+  const [floatingButtonPosition, setFloatingButtonPosition] = useState({ x: 0, y: 0 });
+  const savedRangeRef = useRef<Range | null>(null);
+  
+  // Word insertion state
+  const [wordInserted, setWordInserted] = useState(false);
+  const [actualWord, setActualWord] = useState("");
+  const insertedSpanRef = useRef<HTMLSpanElement | null>(null);
+  
+  // Drag state for expanding selection
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragButtonPosition, setDragButtonPosition] = useState({ x: 0, y: 0 });
+  const insertedSpansRef = useRef<HTMLSpanElement[]>([]);
+  const actualWordsRef = useRef<string[]>([]);
+  const lastMousePosRef = useRef({ x: 0, y: 0 });
 
   const execCmd = useCallback((cmd: string, value?: string) => {
     window.document.execCommand(cmd, false, value);
@@ -110,6 +134,299 @@ export function DocumentEditor({
     setIsBold(window.document.queryCommandState("bold"));
     setIsItalic(window.document.queryCommandState("italic"));
     setIsUnderline(window.document.queryCommandState("underline"));
+  }, []);
+
+  // Generate random word
+  const generateRandomWord = useCallback(() => {
+    const length = Math.floor(Math.random() * 14) + 3; // 3 to 16 characters
+    const characters = 'abcdefghijklmnopqrstuvwxyz';
+    let word = '';
+    for (let i = 0; i < length; i++) {
+      word += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return word;
+  }, []);
+
+  // Insert word at cursor position
+  const insertWordAtCursor = useCallback(() => {
+    const word = generateRandomWord();
+    const obfuscated = '*'.repeat(word.length);
+    
+    if (savedRangeRef.current) {
+      const selection = window.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(savedRangeRef.current);
+        
+        // Create a span with obfuscated text
+        const span = document.createElement("span");
+        span.style.backgroundColor = "#8149EC33";
+        span.style.color = "#8149EC";
+        span.style.padding = "2px 4px";
+        span.style.borderRadius = "3px";
+        span.textContent = obfuscated;
+        
+        // Insert the span
+        savedRangeRef.current.insertNode(span);
+        insertedSpanRef.current = span;
+        
+        // Initialize tracking arrays
+        insertedSpansRef.current = [span];
+        actualWordsRef.current = [word];
+        
+        // Move cursor to end of word (instead of selecting it)
+        const newRange = document.createRange();
+        newRange.setStartAfter(span);
+        newRange.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+        
+        // Store actual word
+        setActualWord(word);
+        setWordInserted(true);
+        
+        // Position drag button to the right of the word
+        const rect = span.getBoundingClientRect();
+        const x = rect.right + 8;
+        const y = rect.top + rect.height / 2 - 16; // Center vertically
+        setDragButtonPosition({ x, y });
+        
+        // Update document content
+        if (activeDoc && editorRef.current) {
+          onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+        }
+      }
+    }
+    
+    editorRef.current?.focus();
+  }, [generateRandomWord, activeDoc, onUpdateDocument]);
+
+  // Accept the word (reveal it)
+  const acceptWord = useCallback(() => {
+    // Handle all inserted spans
+    if (insertedSpansRef.current.length > 0 && actualWordsRef.current.length > 0) {
+      // Add space at the beginning (before first span)
+      const firstSpan = insertedSpansRef.current[0];
+      if (firstSpan && firstSpan.previousSibling) {
+        const spaceTextNode = document.createTextNode(" ");
+        firstSpan.parentNode?.insertBefore(spaceTextNode, firstSpan);
+      }
+      
+      insertedSpansRef.current.forEach((span, index) => {
+        const word = actualWordsRef.current[index];
+        if (span && word) {
+          // Remove leading space if it exists
+          const text = span.textContent?.startsWith(' ') ? ' ' + word : word;
+          span.textContent = text;
+          span.style.backgroundColor = "transparent";
+          span.style.color = "inherit";
+          span.style.padding = "0";
+        }
+      });
+      
+      // Add space at the end (after last span)
+      const lastSpan = insertedSpansRef.current[insertedSpansRef.current.length - 1];
+      if (lastSpan) {
+        const spaceTextNode = document.createTextNode(" ");
+        lastSpan.parentNode?.insertBefore(spaceTextNode, lastSpan.nextSibling);
+        
+        // Move cursor after the space
+        const selection = window.getSelection();
+        if (selection) {
+          const range = document.createRange();
+          range.setStartAfter(spaceTextNode);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+      
+      // Update document content
+      if (activeDoc && editorRef.current) {
+        onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+      }
+      
+      // Reset state
+      setWordInserted(false);
+      setShowFloatingButton(false);
+      setActualWord("");
+      insertedSpanRef.current = null;
+      insertedSpansRef.current = [];
+      actualWordsRef.current = [];
+    }
+    editorRef.current?.focus();
+  }, [activeDoc, onUpdateDocument]);
+
+  // Delete the word
+  const deleteWord = useCallback(() => {
+    // Remove all inserted spans
+    if (insertedSpansRef.current.length > 0) {
+      insertedSpansRef.current.forEach(span => {
+        if (span) {
+          span.remove();
+        }
+      });
+      
+      // Update document content
+      if (activeDoc && editorRef.current) {
+        onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+      }
+      
+      // Reset state
+      setWordInserted(false);
+      setShowFloatingButton(false);
+      setActualWord("");
+      insertedSpanRef.current = null;
+      insertedSpansRef.current = [];
+      actualWordsRef.current = [];
+    }
+    editorRef.current?.focus();
+  }, [activeDoc, onUpdateDocument]);
+
+  // Handle drag start on the drag button
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+    lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+  }, []);
+
+  // Handle mouse move during drag
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    const lastSpan = insertedSpansRef.current[insertedSpansRef.current.length - 1];
+    if (!lastSpan) return;
+
+    // Get position of the end of the last span
+    const lastSpanRect = lastSpan.getBoundingClientRect();
+    const endX = lastSpanRect.right;
+    const endY = lastSpanRect.top + lastSpanRect.height / 2;
+
+    // Calculate distance from end of selection to mouse
+    const distanceX = mouseX - endX;
+    const distanceY = mouseY - endY;
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+    // If mouse is ahead of selection end, add words
+    if (mouseX > endX && distance > 30) {
+      const word = generateRandomWord();
+      const obfuscated = '*'.repeat(word.length);
+      
+      // Create new span
+      const newSpan = document.createElement("span");
+      newSpan.style.backgroundColor = "#8149EC33";
+      newSpan.style.color = "#8149EC";
+      newSpan.style.padding = "2px 4px";
+      newSpan.style.borderRadius = "3px";
+      newSpan.textContent = " " + obfuscated; // Add space before
+      
+      // Insert after last span
+      lastSpan.insertAdjacentElement("afterend", newSpan);
+      
+      // Track the new span
+      insertedSpansRef.current.push(newSpan);
+      actualWordsRef.current.push(word);
+      
+      // Update selection to include all spans
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.setStartBefore(insertedSpansRef.current[0]);
+        range.setEndAfter(newSpan);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      
+      // Update button position
+      const rect = newSpan.getBoundingClientRect();
+      const x = rect.right + 8;
+      const y = rect.top + rect.height / 2 - 16;
+      setDragButtonPosition({ x, y });
+      
+      // Update document
+      if (activeDoc && editorRef.current) {
+        onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+      }
+    }
+    // If mouse is behind selection end and we have more than 1 word, remove words
+    else if (mouseX < endX - 30 && insertedSpansRef.current.length > 1) {
+      const spanToRemove = insertedSpansRef.current[insertedSpansRef.current.length - 1];
+      
+      if (spanToRemove) {
+        // Remove last span
+        spanToRemove.remove();
+        insertedSpansRef.current.pop();
+        actualWordsRef.current.pop();
+        
+        // Update selection to include remaining spans
+        const newLastSpan = insertedSpansRef.current[insertedSpansRef.current.length - 1];
+        if (newLastSpan) {
+          const selection = window.getSelection();
+          if (selection) {
+            const range = document.createRange();
+            range.setStartBefore(insertedSpansRef.current[0]);
+            range.setEndAfter(newLastSpan);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
+          
+          // Update button position to new last span
+          const rect = newLastSpan.getBoundingClientRect();
+          const x = rect.right + 8;
+          const y = rect.top + rect.height / 2 - 16;
+          setDragButtonPosition({ x, y });
+        }
+        
+        // Update document
+        if (activeDoc && editorRef.current) {
+          onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+        }
+      }
+    }
+  }, [isDragging, generateRandomWord, activeDoc, onUpdateDocument]);
+
+  // Handle drag end
+  const handleMouseUp = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
+    }
+  }, [isDragging]);
+
+  // Add mouse move/up listeners when dragging
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Handle cursor position and show floating button
+  const handleEditorClick = useCallback((e: React.MouseEvent) => {
+    setShowStyleMenu(false);
+    setShowFontMenu(false);
+
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      savedRangeRef.current = range.cloneRange();
+      const rect = range.getBoundingClientRect();
+      
+      // Position button above cursor
+      const buttonWidth = 100; // Approximate button width
+      const buttonHeight = 40; // Approximate button height with offset
+      const x = rect.left + rect.width / 2 - buttonWidth / 2;
+      const y = rect.top - buttonHeight;
+      
+      setFloatingButtonPosition({ x, y });
+      setShowFloatingButton(true);
+    }
   }, []);
 
   const handleFontSize = (delta: number) => {
@@ -343,10 +660,7 @@ export function DocumentEditor({
             suppressContentEditableWarning
             onKeyUp={updateFormatState}
             onMouseUp={updateFormatState}
-            onClick={() => {
-              setShowStyleMenu(false);
-              setShowFontMenu(false);
-            }}
+            onClick={handleEditorClick}
             onInput={() => {
               if (activeDoc && editorRef.current) {
                 onUpdateDocument(activeDoc.id, editorRef.current.innerText);
@@ -355,6 +669,69 @@ export function DocumentEditor({
             className="bg-white outline-none w-[846px] min-w-[846px] min-h-[1095px] h-auto px-[62px] py-[67px] text-[16px] text-[#1a1a1a] leading-[1.6] shadow-lg flex-shrink-0 mx-auto"
             style={{ fontFamily, caretColor: "#333" }}
           />
+          
+          {/* Floating button above cursor - only show when Create tab is active */}
+          {showFloatingButton && !wordInserted && aiToolActiveTab === "create" && (
+            <button
+              onMouseDown={(e) => {
+                e.preventDefault();
+                insertWordAtCursor();
+              }}
+              className="fixed z-50 bg-[#8149EC] hover:bg-[#9159FC] text-white w-10 h-10 rounded-full shadow-lg transition-colors flex items-center justify-center"
+              style={{
+                left: `${floatingButtonPosition.x}px`,
+                top: `${floatingButtonPosition.y}px`,
+              }}
+            >
+              <Plus size={20} />
+            </button>
+          )}
+          
+          {/* Accept/Reject buttons after word insertion */}
+          {wordInserted && (
+            <div
+              className="fixed z-50 flex gap-2"
+              style={{
+                left: `${floatingButtonPosition.x}px`,
+                top: `${floatingButtonPosition.y}px`,
+              }}
+            >
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  acceptWord();
+                }}
+                className="bg-[#22C55E] hover:bg-[#16A34A] text-white p-2 rounded-lg shadow-lg transition-colors"
+                title="Accept word"
+              >
+                <Check size={18} />
+              </button>
+              <button
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  deleteWord();
+                }}
+                className="bg-[#EF4444] hover:bg-[#DC2626] text-white p-2 rounded-lg shadow-lg transition-colors"
+                title="Delete word"
+              >
+                <Trash2 size={18} />
+              </button>
+            </div>
+          )}
+          
+          {/* Drag button for expanding selection */}
+          {wordInserted && (
+            <button
+              onMouseDown={handleDragStart}
+              className="fixed z-50 bg-[#8149EC] hover:bg-[#9159FC] text-white px-4 py-2 rounded-lg shadow-lg transition-colors text-sm font-medium"
+              style={{
+                left: `${dragButtonPosition.x}px`,
+                top: `${dragButtonPosition.y}px`,
+              }}
+            >
+              Drag to add
+            </button>
+          )}
         </div>
 
         {/* Single animated tab button — slides with the panel */}
@@ -410,7 +787,7 @@ export function DocumentEditor({
           }}
         >
           <div className="w-[370px] h-full">
-            <AiToolPanel onClose={onToggleAiTool} />
+            <AiToolPanel onClose={onToggleAiTool} activeTab={aiToolActiveTab} onTabChange={onAiToolTabChange} />
           </div>
         </div>
       </div>

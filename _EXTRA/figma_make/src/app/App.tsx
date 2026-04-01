@@ -77,6 +77,7 @@ export default function App() {
   const [openDocuments, setOpenDocuments] = useState<DocTab[]>([]);
   const [activeDocId, setActiveDocId] = useState<string | null>(null);
   const [aiToolOpen, setAiToolOpen] = useState(false);
+  const [aiToolActiveTab, setAiToolActiveTab] = useState<"rewrite" | "create">("rewrite");
   const [recentDocs] = useState<DocTab[]>(SAMPLE_DOCS);
 
   const openDocument = (doc: DocTab) => {
@@ -149,6 +150,8 @@ export default function App() {
           aiToolOpen={aiToolOpen}
           onToggleAiTool={() => setAiToolOpen((prev) => !prev)}
           onUpdateDocument={updateDocument}
+          aiToolActiveTab={aiToolActiveTab}
+          onAiToolTabChange={setAiToolActiveTab}
         />
       )}
     </div>

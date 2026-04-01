@@ -106,6 +106,15 @@ const INITIAL_PROMPTS: Prompt[] = [
   },
 ];
 
+const EXAMPLE_CREATE_PROMPTS = [
+  {
+    label: "Prompt 1",
+    text: "Write a short introduction paragraph about the history of renewable energy.",
+  },
+  { label: "Prompt 2", text: "Make sure it's professional and concise." },
+  { label: "Prompt 3", text: "Include the word \"environment\"." },
+];
+
 const INITIAL_ADVANCED_OPTIONS: AdvancedOptionsConfig = {
   minWords: 0,
   maxWords: 300,
@@ -227,9 +236,14 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
 
   const [activeTab, setActiveTab] = useState<"rewrite" | "create">("rewrite");
   const [mode, setMode] = useState<"slider" | "prompt">("slider");
+
+  // Prompts and Slider states
   const [sliders, setSliders] = useState<SliderConfig[]>(INITIAL_SLIDERS);
   const [prompts, setPrompts] = useState<Prompt[]>(INITIAL_PROMPTS);
   const [promptInput, setPromptInput] = useState("");
+  const [createPrompts, setCreatePrompts] = useState<Prompt[]>([]);
+  const [createPromptInput, setCreatePromptInput] = useState("");
+
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
@@ -238,6 +252,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const createOutputRef = useRef<HTMLDivElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   
@@ -515,6 +530,25 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
     if (e.key === "Enter") sendPrompt();
   };
 
+  const deleteCreatePrompt = (id: string) => {
+    setCreatePrompts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const sendCreatePrompt = () => {
+    if (!createPromptInput.trim()) return;
+    const newPrompt: Prompt = {
+      id: `c-${Date.now()}`,
+      label: `Prompt ${createPrompts.length + 1}`,
+      userPrompt: createPromptInput.trim(),
+    };
+    setCreatePrompts((prev) => [...prev, newPrompt]);
+    setCreatePromptInput("");
+  };
+
+  const handleCreateKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") sendCreatePrompt();
+  };
+
   // Close menu when clicking outside
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -608,6 +642,30 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   />
                 </button>
               </div>
+              <div className="flex items-center gap-3">
+                <button className="hover:opacity-70 transition-opacity">
+                  <svg viewBox="0 0 16 15" fill="none" className="w-5 h-5">
+                    <path
+                      d="M3 15V13H10.1C11.15 13 12.0625 12.6667 12.8375 12C13.6125 11.3333 14 10.5 14 9.5C14 8.5 13.6125 7.66667 12.8375 7C12.0625 6.33333 11.15 6 10.1 6H3.8L6.4 8.6L5 10L0 5L5 0L6.4 1.4L3.8 4H10.1C11.7167 4 13.1042 4.525 14.2625 5.575C15.4208 6.625 16 7.93333 16 9.5C16 11.0667 15.4208 12.375 14.2625 13.425C13.1042 14.475 11.7167 15 10.1 15H3Z"
+                      fill="#898989"
+                    />
+                  </svg>
+                </button>
+                <button className="hover:opacity-70 transition-opacity">
+                  <svg viewBox="0 0 16 15" fill="none" className="w-5 h-5">
+                    <path
+                      d="M5.9 15C4.28333 15 2.89583 14.475 1.7375 13.425C0.579167 12.375 0 11.0667 0 9.5C0 7.93333 0.579167 6.625 1.7375 5.575C2.89583 4.525 4.28333 4 5.9 4H12.2L9.6 1.4L11 0L16 5L11 10L9.6 8.6L12.2 6H5.9C4.85 6 3.9375 6.33333 3.1625 7C2.3875 7.66667 2 8.5 2 9.5C2 10.5 2.3875 11.3333 3.1625 12C3.9375 12.6667 4.85 13 5.9 13H13V15H5.9Z"
+                      fill="#898989"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Undo/redo — Create only */}
+          {activeTab === "create" && (
+            <div className="flex items-center justify-end">
               <div className="flex items-center gap-3">
                 <button className="hover:opacity-70 transition-opacity">
                   <svg viewBox="0 0 16 15" fill="none" className="w-5 h-5">
@@ -828,10 +886,10 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
-                <button 
+                <button
                   onClick={() => {
                     setGeneratedText("");
-                    onFinish(outputRef.current?.innerHTML || '');
+                    onFinish(outputRef.current?.innerHTML || "");
                   }}
                   className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
                 >
@@ -841,9 +899,14 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   <button
                     onClick={async () => {
                       if (mode === "slider") {
-                        setGeneratedText(await SliderGenerate(outputRef.current?.innerHTML || '', sliders,
-                          advancedOptionsConfig,
-                          includeAdvancedOptions));
+                        setGeneratedText(
+                          await SliderGenerate(
+                            outputRef.current?.innerHTML || "",
+                            sliders,
+                            advancedOptionsConfig,
+                            includeAdvancedOptions,
+                          ),
+                        );
                       } else if (mode === "prompt") {
                         setGeneratedText(
                           await PromptGenerate(
@@ -865,12 +928,155 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
           </>
         )}
 
-        {/* ── CREATE TAB — placeholder ── */}
-        {activeTab === "create" && <CreateTab />}
+        {/* activeTab === "create" && <CreateTab /> */}
+        {/* ── CREATE TAB ── */}
+        {activeTab === "create" && (
+          <>
+            {/* Output area */}
+            <div className="mx-4 mb-3 flex-shrink-0">
+              <div className="relative bg-white rounded-[6px] h-[168px] overflow-y-auto">
+                <div
+                  ref={createOutputRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  data-placeholder="Your generated content will appear here"
+                  className="create-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3"
+                />
+              </div>
+              <div className="flex items-center justify-between mt-2 px-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-[#8149EC]" />
+                  <span className="text-[#a6a6a6] text-[10px]">Ready</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button className="hover:opacity-70 transition-opacity">
+                    <RotateCcw size={15} color="#898989" />
+                  </button>
+                  <button className="hover:opacity-70 transition-opacity p-1">
+                    <ChevronLeft size={15} color="#898989" />
+                  </button>
+                  <span className="text-[#a6a6a6] text-[10px] mx-1">1/1</span>
+                  <button className="hover:opacity-70 transition-opacity p-1">
+                    <ChevronRight size={15} color="#898989" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mx-4 h-px bg-[#898989]/30 mb-2 flex-shrink-0" />
+
+            {/* Scrollable prompt list */}
+            <div className="flex-1 overflow-y-auto px-4 min-h-0">
+              <div className="flex items-center justify-between py-2 mb-1">
+                <span className="text-[#E9E9E9] text-[13px] font-medium">
+                  Describe what you want to create and we'll generate it for
+                  you.
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {createPrompts.length === 0 ? (
+                  /* Faded non-interactive example prompts */
+                  <div className="opacity-40 pointer-events-none select-none flex flex-col gap-3">
+                    <span className="text-[#A6A6A6] text-[11px] font-medium uppercase tracking-wide">
+                      Example prompts
+                    </span>
+                    {EXAMPLE_CREATE_PROMPTS.map((prompt, i) => (
+                      <div key={i} className="bg-[#262626] rounded-[8px] p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[#A6A6A6] text-[11px] font-medium">
+                            {prompt.label}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Trash2 size={13} color="#E03030" />
+                            <Pencil size={13} color="#898989" />
+                          </div>
+                        </div>
+                        <p className="text-[#E9E9E9] text-[12px] leading-[1.5]">
+                          {prompt.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  createPrompts.map((prompt) => (
+                    <div
+                      key={prompt.id}
+                      className="bg-[#262626] rounded-[8px] p-3"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[#A6A6A6] text-[11px] font-medium">
+                          {prompt.label}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => deleteCreatePrompt(prompt.id)}
+                            className="hover:opacity-70 transition-opacity"
+                          >
+                            <Trash2 size={13} color="#E03030" />
+                          </button>
+                          <button className="hover:opacity-70 transition-opacity">
+                            <Pencil size={13} color="#898989" />
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-[#E9E9E9] text-[12px] leading-[1.5]">
+                        {prompt.userPrompt}
+                      </p>
+                    </div>
+                  ))
+                )}
+                {/* Advanced Options Expandable Section */}
+                {AdvancedOptionsSection()}
+              </div>
+            </div>
+
+            {/* Prompt input */}
+            <div className="px-4 py-3 flex-shrink-0">
+              <div className="flex items-center bg-[#262626] rounded-full px-4 py-2 gap-3">
+                <input
+                  type="text"
+                  value={createPromptInput}
+                  onChange={(e) => setCreatePromptInput(e.target.value)}
+                  onKeyDown={handleCreateKeyDown}
+                  placeholder="Describe what you want to create..."
+                  className="flex-1 bg-transparent text-[#E9E9E9] text-[12px] placeholder-[#898989] outline-none"
+                />
+                <button
+                  onClick={sendCreatePrompt}
+                  className="w-7 h-7 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center flex-shrink-0 transition-colors"
+                >
+                  <Send size={13} color="#E9E9E9" />
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex-shrink-0">
+              <div className="h-px bg-[#898989]/30 mx-4" />
+              <div className="flex items-center justify-between px-4 py-3">
+                <button className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors">
+                  Finish
+                </button>
+                <button className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">
+                  Generate
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Slider thumb styling */}
         <style>{`
           .ai-output-editable:empty::before {
+            content: attr(data-placeholder);
+            color: #A6A6A6;
+            display: block;
+            text-align: center;
+            padding-top: 54px;
+            pointer-events: none;
+          }
+          .create-output-editable:empty::before {
             content: attr(data-placeholder);
             color: #A6A6A6;
             display: block;

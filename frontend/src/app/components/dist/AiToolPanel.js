@@ -123,6 +123,14 @@ var INITIAL_PROMPTS = [
         userPrompt: "Make the content more engaging and interesting."
     },
 ];
+var EXAMPLE_CREATE_PROMPTS = [
+    {
+        label: "Prompt 1",
+        text: "Write a short introduction paragraph about the history of renewable energy."
+    },
+    { label: "Prompt 2", text: "Make sure it's professional and concise." },
+    { label: "Prompt 3", text: "Include the word \"environment\"." },
+];
 var INITIAL_ADVANCED_OPTIONS = {
     minWords: 0,
     maxWords: 300,
@@ -179,23 +187,27 @@ function AiToolPanel(_a) {
     var onClose = _a.onClose, selectedText = _a.selectedText, onFinish = _a.onFinish;
     var _b = react_1.useState("rewrite"), activeTab = _b[0], setActiveTab = _b[1];
     var _c = react_1.useState("slider"), mode = _c[0], setMode = _c[1];
+    // Prompts and Slider states
     var _d = react_1.useState(INITIAL_SLIDERS), sliders = _d[0], setSliders = _d[1];
     var _e = react_1.useState(INITIAL_PROMPTS), prompts = _e[0], setPrompts = _e[1];
     var _f = react_1.useState(""), promptInput = _f[0], setPromptInput = _f[1];
-    var _g = react_1.useState(false), showAdvanced = _g[0], setShowAdvanced = _g[1];
-    var _h = react_1.useState(false), advancedExpanded = _h[0], setAdvancedExpanded = _h[1];
-    var _j = react_1.useState(null), editingLabelId = _j[0], setEditingLabelId = _j[1];
-    var _k = react_1.useState(""), tempLabelValue = _k[0], setTempLabelValue = _k[1];
-    var _l = react_1.useState(""), generatedText = _l[0], setGeneratedText = _l[1];
-    var _m = react_1.useState(null), openMenuId = _m[0], setOpenMenuId = _m[1];
+    var _g = react_1.useState([]), createPrompts = _g[0], setCreatePrompts = _g[1];
+    var _h = react_1.useState(""), createPromptInput = _h[0], setCreatePromptInput = _h[1];
+    var _j = react_1.useState(false), showAdvanced = _j[0], setShowAdvanced = _j[1];
+    var _k = react_1.useState(false), advancedExpanded = _k[0], setAdvancedExpanded = _k[1];
+    var _l = react_1.useState(null), editingLabelId = _l[0], setEditingLabelId = _l[1];
+    var _m = react_1.useState(""), tempLabelValue = _m[0], setTempLabelValue = _m[1];
+    var _o = react_1.useState(""), generatedText = _o[0], setGeneratedText = _o[1];
+    var _p = react_1.useState(null), openMenuId = _p[0], setOpenMenuId = _p[1];
     var inputRef = react_1.useRef(null);
     var outputRef = react_1.useRef(null);
+    var createOutputRef = react_1.useRef(null);
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _o = react_1.useState(250), currentWords = _o[0], setCurrentWords = _o[1];
-    var _p = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _p[0], setAdvancedOptionsConfig = _p[1];
-    var _q = react_1.useState(false), includeAdvancedOptions = _q[0], setIncludeAdvancedOptions = _q[1];
+    var _q = react_1.useState(250), currentWords = _q[0], setCurrentWords = _q[1];
+    var _r = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _r[0], setAdvancedOptionsConfig = _r[1];
+    var _s = react_1.useState(false), includeAdvancedOptions = _s[0], setIncludeAdvancedOptions = _s[1];
     var TICK_COUNT = 11; // 0 through 10
     function AdvancedOptionsSection() {
         return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
@@ -329,6 +341,24 @@ function AiToolPanel(_a) {
         if (e.key === "Enter")
             sendPrompt();
     };
+    var deleteCreatePrompt = function (id) {
+        setCreatePrompts(function (prev) { return prev.filter(function (p) { return p.id !== id; }); });
+    };
+    var sendCreatePrompt = function () {
+        if (!createPromptInput.trim())
+            return;
+        var newPrompt = {
+            id: "c-" + Date.now(),
+            label: "Prompt " + (createPrompts.length + 1),
+            userPrompt: createPromptInput.trim()
+        };
+        setCreatePrompts(function (prev) { return __spreadArrays(prev, [newPrompt]); });
+        setCreatePromptInput("");
+    };
+    var handleCreateKeyDown = function (e) {
+        if (e.key === "Enter")
+            sendCreatePrompt();
+    };
     // Close menu when clicking outside
     react_1["default"].useEffect(function () {
         var handleClickOutside = function (event) {
@@ -371,6 +401,14 @@ function AiToolPanel(_a) {
                             react_1["default"].createElement(lucide_react_1.Sliders, { size: 16, color: mode === "slider" ? "#E9E9E9" : "#898989" })),
                         react_1["default"].createElement("button", { onClick: function () { return setMode("prompt"); }, className: "flex items-center justify-center px-3 py-1 rounded-[12px] transition-colors " + (mode === "prompt" ? "bg-[#303030]" : "hover:bg-[#303030]/50") },
                             react_1["default"].createElement(lucide_react_1.MessageSquare, { size: 16, color: mode === "prompt" ? "#E9E9E9" : "#898989" }))),
+                    react_1["default"].createElement("div", { className: "flex items-center gap-3" },
+                        react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
+                            react_1["default"].createElement("svg", { viewBox: "0 0 16 15", fill: "none", className: "w-5 h-5" },
+                                react_1["default"].createElement("path", { d: "M3 15V13H10.1C11.15 13 12.0625 12.6667 12.8375 12C13.6125 11.3333 14 10.5 14 9.5C14 8.5 13.6125 7.66667 12.8375 7C12.0625 6.33333 11.15 6 10.1 6H3.8L6.4 8.6L5 10L0 5L5 0L6.4 1.4L3.8 4H10.1C11.7167 4 13.1042 4.525 14.2625 5.575C15.4208 6.625 16 7.93333 16 9.5C16 11.0667 15.4208 12.375 14.2625 13.425C13.1042 14.475 11.7167 15 10.1 15H3Z", fill: "#898989" }))),
+                        react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
+                            react_1["default"].createElement("svg", { viewBox: "0 0 16 15", fill: "none", className: "w-5 h-5" },
+                                react_1["default"].createElement("path", { d: "M5.9 15C4.28333 15 2.89583 14.475 1.7375 13.425C0.579167 12.375 0 11.0667 0 9.5C0 7.93333 0.579167 6.625 1.7375 5.575C2.89583 4.525 4.28333 4 5.9 4H12.2L9.6 1.4L11 0L16 5L11 10L9.6 8.6L12.2 6H5.9C4.85 6 3.9375 6.33333 3.1625 7C2.3875 7.66667 2 8.5 2 9.5C2 10.5 2.3875 11.3333 3.1625 12C3.9375 12.6667 4.85 13 5.9 13H13V15H5.9Z", fill: "#898989" })))))),
+                activeTab === "create" && (react_1["default"].createElement("div", { className: "flex items-center justify-end" },
                     react_1["default"].createElement("div", { className: "flex items-center gap-3" },
                         react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
                             react_1["default"].createElement("svg", { viewBox: "0 0 16 15", fill: "none", className: "w-5 h-5" },
@@ -451,7 +489,7 @@ function AiToolPanel(_a) {
                         react_1["default"].createElement("button", { onClick: function () {
                                 var _a;
                                 setGeneratedText("");
-                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || '');
+                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
                             }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
                         react_1["default"].createElement("div", { className: "flex items-center gap-3" },
                             react_1["default"].createElement("button", { onClick: function () { return __awaiter(_this, void 0, void 0, function () {
@@ -462,7 +500,7 @@ function AiToolPanel(_a) {
                                             case 0:
                                                 if (!(mode === "slider")) return [3 /*break*/, 2];
                                                 _a = setGeneratedText;
-                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_c = outputRef.current) === null || _c === void 0 ? void 0 : _c.innerHTML) || '', sliders, advancedOptionsConfig, includeAdvancedOptions)];
+                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_c = outputRef.current) === null || _c === void 0 ? void 0 : _c.innerHTML) || "", sliders, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 1:
                                                 _a.apply(void 0, [_e.sent()]);
                                                 return [3 /*break*/, 4];
@@ -477,7 +515,57 @@ function AiToolPanel(_a) {
                                         }
                                     });
                                 }); }, className: "bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors" }, "Generate")))))),
-            activeTab === "create" && react_1["default"].createElement(CreateTab, null),
-            react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n        "))));
+            activeTab === "create" && (react_1["default"].createElement(react_1["default"].Fragment, null,
+                react_1["default"].createElement("div", { className: "mx-4 mb-3 flex-shrink-0" },
+                    react_1["default"].createElement("div", { className: "relative bg-white rounded-[6px] h-[168px] overflow-y-auto" },
+                        react_1["default"].createElement("div", { ref: createOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Your generated content will appear here", className: "create-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3" })),
+                    react_1["default"].createElement("div", { className: "flex items-center justify-between mt-2 px-1" },
+                        react_1["default"].createElement("div", { className: "flex items-center gap-2" },
+                            react_1["default"].createElement("div", { className: "w-2 h-2 rounded-full bg-[#8149EC]" }),
+                            react_1["default"].createElement("span", { className: "text-[#a6a6a6] text-[10px]" }, "Ready")),
+                        react_1["default"].createElement("div", { className: "flex items-center gap-1" },
+                            react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
+                                react_1["default"].createElement(lucide_react_1.RotateCcw, { size: 15, color: "#898989" })),
+                            react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity p-1" },
+                                react_1["default"].createElement(lucide_react_1.ChevronLeft, { size: 15, color: "#898989" })),
+                            react_1["default"].createElement("span", { className: "text-[#a6a6a6] text-[10px] mx-1" }, "1/1"),
+                            react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity p-1" },
+                                react_1["default"].createElement(lucide_react_1.ChevronRight, { size: 15, color: "#898989" }))))),
+                react_1["default"].createElement("div", { className: "mx-4 h-px bg-[#898989]/30 mb-2 flex-shrink-0" }),
+                react_1["default"].createElement("div", { className: "flex-1 overflow-y-auto px-4 min-h-0" },
+                    react_1["default"].createElement("div", { className: "flex items-center justify-between py-2 mb-1" },
+                        react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[13px] font-medium" }, "Describe what you want to create and we'll generate it for you.")),
+                    react_1["default"].createElement("div", { className: "flex flex-col gap-3" },
+                        createPrompts.length === 0 ? (
+                        /* Faded non-interactive example prompts */
+                        react_1["default"].createElement("div", { className: "opacity-40 pointer-events-none select-none flex flex-col gap-3" },
+                            react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px] font-medium uppercase tracking-wide" }, "Example prompts"),
+                            EXAMPLE_CREATE_PROMPTS.map(function (prompt, i) { return (react_1["default"].createElement("div", { key: i, className: "bg-[#262626] rounded-[8px] p-3" },
+                                react_1["default"].createElement("div", { className: "flex items-center justify-between mb-1" },
+                                    react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px] font-medium" }, prompt.label),
+                                    react_1["default"].createElement("div", { className: "flex items-center gap-2" },
+                                        react_1["default"].createElement(lucide_react_1.Trash2, { size: 13, color: "#E03030" }),
+                                        react_1["default"].createElement(lucide_react_1.Pencil, { size: 13, color: "#898989" }))),
+                                react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[12px] leading-[1.5]" }, prompt.text))); }))) : (createPrompts.map(function (prompt) { return (react_1["default"].createElement("div", { key: prompt.id, className: "bg-[#262626] rounded-[8px] p-3" },
+                            react_1["default"].createElement("div", { className: "flex items-center justify-between mb-1" },
+                                react_1["default"].createElement("span", { className: "text-[#A6A6A6] text-[11px] font-medium" }, prompt.label),
+                                react_1["default"].createElement("div", { className: "flex items-center gap-2" },
+                                    react_1["default"].createElement("button", { onClick: function () { return deleteCreatePrompt(prompt.id); }, className: "hover:opacity-70 transition-opacity" },
+                                        react_1["default"].createElement(lucide_react_1.Trash2, { size: 13, color: "#E03030" })),
+                                    react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
+                                        react_1["default"].createElement(lucide_react_1.Pencil, { size: 13, color: "#898989" })))),
+                            react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[12px] leading-[1.5]" }, prompt.userPrompt))); })),
+                        AdvancedOptionsSection())),
+                react_1["default"].createElement("div", { className: "px-4 py-3 flex-shrink-0" },
+                    react_1["default"].createElement("div", { className: "flex items-center bg-[#262626] rounded-full px-4 py-2 gap-3" },
+                        react_1["default"].createElement("input", { type: "text", value: createPromptInput, onChange: function (e) { return setCreatePromptInput(e.target.value); }, onKeyDown: handleCreateKeyDown, placeholder: "Describe what you want to create...", className: "flex-1 bg-transparent text-[#E9E9E9] text-[12px] placeholder-[#898989] outline-none" }),
+                        react_1["default"].createElement("button", { onClick: sendCreatePrompt, className: "w-7 h-7 rounded-full bg-[#3a3a3a] hover:bg-[#4a4a4a] flex items-center justify-center flex-shrink-0 transition-colors" },
+                            react_1["default"].createElement(lucide_react_1.Send, { size: 13, color: "#E9E9E9" })))),
+                react_1["default"].createElement("div", { className: "flex-shrink-0" },
+                    react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
+                    react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
+                        react_1["default"].createElement("button", { className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("button", { className: "bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors" }, "Generate"))))),
+            react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          .create-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n        "))));
 }
 exports.AiToolPanel = AiToolPanel;
