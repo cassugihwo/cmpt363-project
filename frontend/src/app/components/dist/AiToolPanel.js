@@ -186,15 +186,16 @@ function AiToolPanel(_a) {
     var _h = react_1.useState(false), advancedExpanded = _h[0], setAdvancedExpanded = _h[1];
     var _j = react_1.useState(null), editingLabelId = _j[0], setEditingLabelId = _j[1];
     var _k = react_1.useState(""), tempLabelValue = _k[0], setTempLabelValue = _k[1];
-    var _l = react_1.useState(null), openMenuId = _l[0], setOpenMenuId = _l[1];
+    var _l = react_1.useState(""), generatedText = _l[0], setGeneratedText = _l[1];
+    var _m = react_1.useState(null), openMenuId = _m[0], setOpenMenuId = _m[1];
     var inputRef = react_1.useRef(null);
     var outputRef = react_1.useRef(null);
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _m = react_1.useState(250), currentWords = _m[0], setCurrentWords = _m[1];
-    var _o = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _o[0], setAdvancedOptionsConfig = _o[1];
-    var _p = react_1.useState(false), includeAdvancedOptions = _p[0], setIncludeAdvancedOptions = _p[1];
+    var _o = react_1.useState(250), currentWords = _o[0], setCurrentWords = _o[1];
+    var _p = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _p[0], setAdvancedOptionsConfig = _p[1];
+    var _q = react_1.useState(false), includeAdvancedOptions = _q[0], setIncludeAdvancedOptions = _q[1];
     var TICK_COUNT = 11; // 0 through 10
     function AdvancedOptionsSection() {
         return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
@@ -342,18 +343,15 @@ function AiToolPanel(_a) {
     }, [openMenuId]);
     // Set selected text in output when provided and output is empty
     react_1.useEffect(function () {
-        //Problem found: selectedText will not change as long as menu is open
-        // const handleClick = (event: MouseEvent) => {
-        //   if (selectedText && outputRef.current) {
-        //     outputRef.current.innerHTML = selectedText;
-        //   }
-        // }
-        // document.addEventListener('mousedown', handleClick);
-        if (selectedText && outputRef.current) {
+        if (selectedText && outputRef.current && generatedText === '') {
             outputRef.current.innerHTML = selectedText;
-            //return () => document.removeEventListener('mousedown', handleClick);
         }
     }, [selectedText]);
+    react_1.useEffect(function () {
+        if (outputRef.current && !(generatedText === '')) {
+            outputRef.current.innerHTML = generatedText;
+        }
+    }, [generatedText]);
     return (react_1["default"].createElement(react_1["default"].Fragment, null,
         showAdvanced && (react_1["default"].createElement(AdvancedOptionsModal_1.AdvancedOptionsModal, { onClose: function () { return setShowAdvanced(false); } })),
         react_1["default"].createElement("div", { className: "flex flex-col bg-[#303030] w-[370px] flex-shrink-0 h-full border-l border-[#898989]/20 relative" },
@@ -450,24 +448,31 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
-                        react_1["default"].createElement("button", { onClick: function () { var _a; return onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || ""); }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("button", { onClick: function () {
+                                var _a;
+                                setGeneratedText("");
+                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || '');
+                            }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
                         react_1["default"].createElement("div", { className: "flex items-center gap-3" },
                             react_1["default"].createElement("button", { onClick: function () { return __awaiter(_this, void 0, void 0, function () {
                                     var _a, _b;
-                                    return __generator(this, function (_c) {
-                                        switch (_c.label) {
+                                    var _c, _d;
+                                    return __generator(this, function (_e) {
+                                        switch (_e.label) {
                                             case 0:
                                                 if (!(mode === "slider")) return [3 /*break*/, 2];
-                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "", sliders, advancedOptionsConfig, includeAdvancedOptions)];
+                                                _a = setGeneratedText;
+                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_c = outputRef.current) === null || _c === void 0 ? void 0 : _c.innerHTML) || '', sliders, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 1:
-                                                _c.sent();
+                                                _a.apply(void 0, [_e.sent()]);
                                                 return [3 /*break*/, 4];
                                             case 2:
                                                 if (!(mode === "prompt")) return [3 /*break*/, 4];
-                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_b = outputRef.current) === null || _b === void 0 ? void 0 : _b.innerHTML) || "", prompts, advancedOptionsConfig, includeAdvancedOptions)];
+                                                _b = setGeneratedText;
+                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_d = outputRef.current) === null || _d === void 0 ? void 0 : _d.innerHTML) || "", prompts, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 3:
-                                                _c.sent();
-                                                _c.label = 4;
+                                                _b.apply(void 0, [_e.sent()]);
+                                                _e.label = 4;
                                             case 4: return [2 /*return*/];
                                         }
                                     });

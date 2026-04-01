@@ -202,10 +202,9 @@ export async function SliderGenerate(
   sliders: SliderConfig[],
   advancedOptions: AdvancedOptionsConfig,
   includeAdvancedOptions: boolean,
-): Promise<void> {
+): Promise<string> {
   const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
 
-export async function SliderGenerate(text: string, sliders: SliderConfig[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch(
@@ -273,10 +272,9 @@ export async function PromptGenerate(
   prompts: Prompt[],
   advancedOptions: AdvancedOptionsConfig,
   includeAdvancedOptions: boolean,
-): Promise<void> {
+): Promise<string> {
   const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
 
-export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<string> {
   // Send API request
   try {
     const response = await fetch(

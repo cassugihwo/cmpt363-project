@@ -828,8 +828,6 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
-                <button
-                  onClick={() => onFinish(outputRef.current?.innerHTML || "")}
                 <button 
                   onClick={() => {
                     setGeneratedText("");
@@ -843,19 +841,17 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                   <button
                     onClick={async () => {
                       if (mode === "slider") {
-                        await SliderGenerate(
-                          outputRef.current?.innerHTML || "",
-                          sliders,
+                        setGeneratedText(await SliderGenerate(outputRef.current?.innerHTML || '', sliders,
                           advancedOptionsConfig,
-                          includeAdvancedOptions,
-                        );
-                        setGeneratedText(await SliderGenerate(outputRef.current?.innerHTML || '', sliders));
+                          includeAdvancedOptions));
                       } else if (mode === "prompt") {
-                        await PromptGenerate(
-                          outputRef.current?.innerHTML || "",
-                          prompts,
-                          advancedOptionsConfig,
-                          includeAdvancedOptions,
+                        setGeneratedText(
+                          await PromptGenerate(
+                            outputRef.current?.innerHTML || "",
+                            prompts,
+                            advancedOptionsConfig,
+                            includeAdvancedOptions,
+                          ),
                         );
                       }
                     }}

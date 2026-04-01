@@ -257,11 +257,11 @@ function SliderGenerate(text, sliders, advancedOptions, includeAdvancedOptions) 
                     console.log("API Response (Slider) -----");
                     console.log(result.message);
                     console.log(result.prompt);
-                    return [3 /*break*/, 5];
+                    return [2 /*return*/, Promise.resolve(result.message)];
                 case 4:
                     error_4 = _a.sent();
                     console.error("API Error (Slider):", error_4);
-                    return [3 /*break*/, 5];
+                    return [2 /*return*/, Promise.reject(-1)];
                 case 5: return [2 /*return*/];
             }
         });
@@ -330,11 +330,11 @@ function PromptGenerate(text, prompts, advancedOptions, includeAdvancedOptions) 
                     console.log("API Response (Prompt) -----");
                     console.log(result.message);
                     console.log(result.prompt);
-                    return [3 /*break*/, 5];
+                    return [2 /*return*/, Promise.resolve(result.message)];
                 case 4:
                     error_5 = _a.sent();
                     console.error("API Error (Prompt):", error_5);
-                    return [3 /*break*/, 5];
+                    return [2 /*return*/, Promise.reject(-1)];
                 case 5: return [2 /*return*/];
             }
         });
