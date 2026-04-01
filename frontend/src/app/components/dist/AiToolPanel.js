@@ -522,7 +522,7 @@ function AiToolPanel(_a) {
                     react_1["default"].createElement("div", { className: "flex items-center justify-between mt-2 px-1" },
                         react_1["default"].createElement("div", { className: "flex items-center gap-2" },
                             react_1["default"].createElement("div", { className: "w-2 h-2 rounded-full bg-[#8149EC]" }),
-                            react_1["default"].createElement("span", { className: "text-[#a6a6a6] text-[10px]" }, "Ready")),
+                            react_1["default"].createElement("span", { className: "text-[#a6a6a6] text-[10px]" }, "Generating")),
                         react_1["default"].createElement("div", { className: "flex items-center gap-1" },
                             react_1["default"].createElement("button", { className: "hover:opacity-70 transition-opacity" },
                                 react_1["default"].createElement(lucide_react_1.RotateCcw, { size: 15, color: "#898989" })),

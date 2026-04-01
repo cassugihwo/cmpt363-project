@@ -946,7 +946,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
               <div className="flex items-center justify-between mt-2 px-1">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-[#8149EC]" />
-                  <span className="text-[#a6a6a6] text-[10px]">Ready</span>
+                  <span className="text-[#a6a6a6] text-[10px]">Generating</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <button className="hover:opacity-70 transition-opacity">
