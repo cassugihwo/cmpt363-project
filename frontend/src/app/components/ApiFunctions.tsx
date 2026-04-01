@@ -34,10 +34,10 @@ export interface Prompt {
 export interface AdvancedOptionsConfig {
   minWords: number | null;
   maxWords: number | null;
-  includeAllTheseWords: string;
-  includeTheseExactPhrases: string;
-  includeAnyOfTheseWords: string;
-  includeNoneOfTheseWords: string;
+  includeAllWords: string;
+  includeExactPhrases: string;
+  includeAnyWords: string;
+  includeNoneWords: string;
   temperature: number;
   useSpelling: boolean;
 }
@@ -82,6 +82,85 @@ export function DebugFunctions(debugMode: number) {
   };
 
   return getHtml();
+}
+
+
+/**
+ * DebugFunction0 --- sends slider data to API
+ * @param text -> current text in output text area
+ * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+export async function DebugFunction0(
+  text: string,
+  sliders: SliderConfig[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
+  // Send API request
+  try {
+    const response = await fetch("http://localhost:5000/api/debugSlider", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        sliders: sliders.map(({ id, ...rest }) => rest),
+        includeAdvancedOptions,
+        advancedOptions: filteredAdvancedOptions,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("API Response (DebugSlider) -----");
+    console.log(result.message);
+    console.log(result.prompt);
+  } catch (error) {
+    console.error("API Error (DebugSlider):", error);
+  }
+}
+
+/**
+ * DebugFunction1 --- sends prompt data to API
+ * @param text -> current text in output text area
+ * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+export async function DebugFunction1(
+  text: string,
+  prompts: Prompt[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
+  // Send API request
+  try {
+    const response = await fetch("http://localhost:5000/api/debugPrompts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text,
+        prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })),
+        includeAdvancedOptions,
+        advancedOptions: filteredAdvancedOptions,
+      }),
+    });
+
+    const result = await response.json();
+    console.log("API Response (DebugPrompts) -----");
+    console.log(result.message);
+    console.log(result.prompt);
+  } catch (error) {
+    console.error("API Error (DebugPrompts):", error);
+  }
 }
 
 
@@ -154,6 +233,7 @@ export async function SliderGenerate(
 }
 
 
+
 /**
  * TestPromptFunction --- prints current text and prompt configurations
  * @param text -> current text in output text area
@@ -182,21 +262,35 @@ export function TestPromptFunction(text: string, prompts: Prompt[]): void {
  * PromptGenerate --- sends prompt data to API
  * @param text -> current text in output text area
  * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
-export async function PromptGenerate(text: string, prompts: Prompt[]): Promise<void> {
+export async function PromptGenerate(
+  text: string,
+  prompts: Prompt[],
+  advancedOptions: AdvancedOptionsConfig,
+  includeAdvancedOptions: boolean,
+): Promise<void> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
   // Send API request
   try {
-    const response = await fetch("http://localhost:5000/api/gemini/generate-prompt", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "http://localhost:5000/api/gemini/generate-prompt",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })), // Only include userPrompt
+          includeAdvancedOptions,
+          advancedOptions: filteredAdvancedOptions,
+        }),
       },
-      body: JSON.stringify({
-        text,
-        prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })), // Only include userPrompt
-      }),
-    });
-    
+    );
+
     const result = await response.json();
     console.log("API Response (Prompt) -----");
     console.log(result.message);

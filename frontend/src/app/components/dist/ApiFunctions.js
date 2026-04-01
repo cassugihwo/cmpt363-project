@@ -47,7 +47,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 exports.__esModule = true;
-exports.PromptGenerate = exports.TestPromptFunction = exports.SliderGenerate = exports.TestSliderFunction = exports.DebugFunctions = void 0;
+exports.PromptGenerate = exports.TestPromptFunction = exports.SliderGenerate = exports.TestSliderFunction = exports.DebugFunction1 = exports.DebugFunction0 = exports.DebugFunctions = void 0;
 var react_1 = require("react");
 var lucide_react_1 = require("lucide-react");
 function DebugFunctions(debugMode) {
@@ -94,6 +94,108 @@ function DebugFunctions(debugMode) {
 }
 exports.DebugFunctions = DebugFunctions;
 /**
+ * DebugFunction0 --- sends slider data to API
+ * @param text -> current text in output text area
+ * @param sliders -> array of current SliderConfig objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+function DebugFunction0(text, sliders, advancedOptions, includeAdvancedOptions) {
+    return __awaiter(this, void 0, Promise, function () {
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    temperature = advancedOptions.temperature, useSpelling = advancedOptions.useSpelling, filteredAdvancedOptions = __rest(advancedOptions, ["temperature", "useSpelling"]);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch("http://localhost:5000/api/debugSlider", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                text: text,
+                                sliders: sliders.map(function (_a) {
+                                    var id = _a.id, rest = __rest(_a, ["id"]);
+                                    return rest;
+                                }),
+                                includeAdvancedOptions: includeAdvancedOptions,
+                                advancedOptions: filteredAdvancedOptions
+                            })
+                        })];
+                case 2:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    console.log("API Response (DebugSlider) -----");
+                    console.log(result.message);
+                    console.log(result.prompt);
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_2 = _a.sent();
+                    console.error("API Error (DebugSlider):", error_2);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.DebugFunction0 = DebugFunction0;
+/**
+ * DebugFunction1 --- sends prompt data to API
+ * @param text -> current text in output text area
+ * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ */
+function DebugFunction1(text, prompts, advancedOptions, includeAdvancedOptions) {
+    return __awaiter(this, void 0, Promise, function () {
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_3;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    temperature = advancedOptions.temperature, useSpelling = advancedOptions.useSpelling, filteredAdvancedOptions = __rest(advancedOptions, ["temperature", "useSpelling"]);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch("http://localhost:5000/api/debugPrompts", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                text: text,
+                                prompts: prompts.map(function (_a) {
+                                    var id = _a.id, label = _a.label, userPrompt = _a.userPrompt;
+                                    return ({ userPrompt: userPrompt });
+                                }),
+                                includeAdvancedOptions: includeAdvancedOptions,
+                                advancedOptions: filteredAdvancedOptions
+                            })
+                        })];
+                case 2:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    console.log("API Response (DebugPrompts) -----");
+                    console.log(result.message);
+                    console.log(result.prompt);
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_3 = _a.sent();
+                    console.error("API Error (DebugPrompts):", error_3);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.DebugFunction1 = DebugFunction1;
+/**
  * TestSliderFunction --- prints current text and slider configurations
  * @param text -> current text in output text area
  * @param sliders -> array of current SliderConfig objects
@@ -124,7 +226,7 @@ exports.TestSliderFunction = TestSliderFunction;
  */
 function SliderGenerate(text, sliders, advancedOptions, includeAdvancedOptions) {
     return __awaiter(this, void 0, Promise, function () {
-        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_2;
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_4;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
@@ -157,8 +259,8 @@ function SliderGenerate(text, sliders, advancedOptions, includeAdvancedOptions) 
                     console.log(result.prompt);
                     return [3 /*break*/, 5];
                 case 4:
-                    error_2 = _a.sent();
-                    console.error("API Error (Slider):", error_2);
+                    error_4 = _a.sent();
+                    console.error("API Error (Slider):", error_4);
                     return [3 /*break*/, 5];
                 case 5: return [2 /*return*/];
             }
@@ -192,14 +294,19 @@ exports.TestPromptFunction = TestPromptFunction;
  * PromptGenerate --- sends prompt data to API
  * @param text -> current text in output text area
  * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
  */
-function PromptGenerate(text, prompts) {
+function PromptGenerate(text, prompts, advancedOptions, includeAdvancedOptions) {
     return __awaiter(this, void 0, Promise, function () {
-        var response, result, error_3;
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_5;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    _a.trys.push([0, 3, , 4]);
+                    temperature = advancedOptions.temperature, useSpelling = advancedOptions.useSpelling, filteredAdvancedOptions = __rest(advancedOptions, ["temperature", "useSpelling"]);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
                     return [4 /*yield*/, fetch("http://localhost:5000/api/gemini/generate-prompt", {
                             method: "POST",
                             headers: {
@@ -210,23 +317,25 @@ function PromptGenerate(text, prompts) {
                                 prompts: prompts.map(function (_a) {
                                     var id = _a.id, label = _a.label, userPrompt = _a.userPrompt;
                                     return ({ userPrompt: userPrompt });
-                                })
+                                }),
+                                includeAdvancedOptions: includeAdvancedOptions,
+                                advancedOptions: filteredAdvancedOptions
                             })
                         })];
-                case 1:
+                case 2:
                     response = _a.sent();
                     return [4 /*yield*/, response.json()];
-                case 2:
+                case 3:
                     result = _a.sent();
                     console.log("API Response (Prompt) -----");
                     console.log(result.message);
                     console.log(result.prompt);
-                    return [3 /*break*/, 4];
-                case 3:
-                    error_3 = _a.sent();
-                    console.error("API Error (Prompt):", error_3);
-                    return [3 /*break*/, 4];
-                case 4: return [2 /*return*/];
+                    return [3 /*break*/, 5];
+                case 4:
+                    error_5 = _a.sent();
+                    console.error("API Error (Prompt):", error_5);
+                    return [3 /*break*/, 5];
+                case 5: return [2 /*return*/];
             }
         });
     });

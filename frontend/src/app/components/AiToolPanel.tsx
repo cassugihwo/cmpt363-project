@@ -3,11 +3,13 @@ import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, 
 import { AdvancedOptionsModal } from "./AdvancedOptionsModal";
 import { 
   DebugFunctions, 
+  DebugFunction0,
+  DebugFunction1,
   SliderGenerate, 
   PromptGenerate, 
   TestSliderFunction, 
   TestPromptFunction, 
-  type SliderConfig, 
+  type SliderConfig,
   type Prompt,
   type AdvancedOptionsConfig
 } from "./ApiFunctions";
@@ -69,26 +71,27 @@ interface AiToolPanelProps {
 const INITIAL_SLIDERS: SliderConfig[] = [
   {
     id: "tone",
-    label: "Tone",
-    level0: "Casual",
-    level100: "Professional",
+    label: "Professionalism",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
   {
     id: "detail",
-    label: "Detail",
-    level0: "Concise",
-    level100: "Detailed",
+    label: "Complexity",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
   {
-    id: "clarity",
-    label: "Clarity",
-    level0: "Natural",
-    level100: "Very Clear",
+    id: "emotion",
+    label: "Emotion",
+    level0: "Low",
+    level100: "High",
     value: 0,
   },
 ];
+
 
 const INITIAL_PROMPTS: Prompt[] = [
   {
@@ -106,10 +109,10 @@ const INITIAL_PROMPTS: Prompt[] = [
 const INITIAL_ADVANCED_OPTIONS: AdvancedOptionsConfig = {
   minWords: 0,
   maxWords: 300,
-  includeAllTheseWords: "",
-  includeTheseExactPhrases: "",
-  includeAnyOfTheseWords: "",
-  includeNoneOfTheseWords: "",
+  includeAllWords: "",
+  includeExactPhrases: "",
+  includeAnyWords: "",
+  includeNoneWords: "",
   temperature: 5,
   useSpelling: false,
 };
@@ -249,7 +252,8 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
       <div className="border-t border-[#555] pt-4 mt-1">
         <button
           onClick={() => setAdvancedExpanded(!advancedExpanded)}
-          className="flex items-center justify-between w-full hover:opacity-70 transition-opacity">
+          className="flex items-center justify-between w-full hover:opacity-70 transition-opacity"
+        >
           <span className="text-[#E9E9E9] text-[14px] font-semibold">
             Advanced Options
           </span>
@@ -257,13 +261,15 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             size={16}
             color="#898989"
             className={`transition-transform duration-200 ${
-              advancedExpanded ? 'rotate-180' : ''
+              advancedExpanded ? "rotate-180" : ""
             }`}
           />
         </button>
-        
+
         {advancedExpanded && (
-          <div className={`mt-4 flex flex-col gap-5 pb-4 ${!includeAdvancedOptions ? 'opacity-50' : ''}`}>
+          <div
+            className={`mt-4 flex flex-col gap-5 pb-4 ${!includeAdvancedOptions ? "opacity-50" : ""}`}
+          >
             {/* Enable Advanced Options */}
             <div className="flex items-center">
               <input
@@ -273,13 +279,18 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                 onChange={(e) => setIncludeAdvancedOptions(e.target.checked)}
                 className="mr-2"
               />
-              <label htmlFor="includeAdvancedOptions" className="text-[#E9E9E9] text-[13px]">
+              <label
+                htmlFor="includeAdvancedOptions"
+                className="text-[#E9E9E9] text-[13px]"
+              >
                 Include Advanced Options
               </label>
             </div>
             {/* Word Count section */}
             <div>
-              <h3 className="text-[#E9E9E9] text-[13px] font-medium mb-3">Word Count</h3>
+              <h3 className="text-[#E9E9E9] text-[13px] font-medium mb-3">
+                Word Count
+              </h3>
               <div className="flex items-end gap-3">
                 <NumberField
                   label="Minimum"
@@ -292,11 +303,7 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                     }))
                   }
                 />
-                <NumberField
-                  label="Current"
-                  value={currentWords}
-                  readOnly
-                />
+                <NumberField label="Current" value={currentWords} readOnly />
                 <NumberField
                   label="Maximum"
                   value={advancedOptionsConfig.maxWords}
@@ -313,28 +320,30 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
 
             {/* Include section */}
             <div>
-              <p className="text-[#E9E9E9] text-[13px] font-medium mb-3">Include:</p>
+              <p className="text-[#E9E9E9] text-[13px] font-medium mb-3">
+                Include:
+              </p>
               <div className="flex flex-col gap-2">
                 {[
                   {
                     ph: "All of these words...",
-                    val: advancedOptionsConfig.includeAllTheseWords,
-                    field: "includeAllTheseWords",
+                    val: advancedOptionsConfig.includeAllWords,
+                    field: "includeAllWords",
                   },
                   {
                     ph: "This exact phrase...",
-                    val: advancedOptionsConfig.includeTheseExactPhrases,
-                    field: "includeTheseExactPhrases",
+                    val: advancedOptionsConfig.includeExactPhrases,
+                    field: "includeExactPhrases",
                   },
                   {
                     ph: "Any of these words...",
-                    val: advancedOptionsConfig.includeAnyOfTheseWords,
-                    field: "includeAnyOfTheseWords",
+                    val: advancedOptionsConfig.includeAnyWords,
+                    field: "includeAnyWords",
                   },
                   {
                     ph: "None of these words...",
-                    val: advancedOptionsConfig.includeNoneOfTheseWords,
-                    field: "includeNoneOfTheseWords",
+                    val: advancedOptionsConfig.includeNoneWords,
+                    field: "includeNoneWords",
                   },
                 ].map(({ ph, val, field }) => (
                   <input
@@ -358,8 +367,13 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
             {/* Temperature */}
             <div>
               <div className="flex items-center gap-2 mb-3">
-                <p className="text-[#E9E9E9] text-[13px] font-medium">Temperature</p>
-                <button disabled={!includeAdvancedOptions} className="hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                <p className="text-[#E9E9E9] text-[13px] font-medium">
+                  Temperature
+                </p>
+                <button
+                  disabled={!includeAdvancedOptions}
+                  className="hover:opacity-70 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <HelpCircle size={14} color="#898989" />
                 </button>
               </div>
@@ -835,6 +849,8 @@ export function AiToolPanel({ onClose, selectedText, onFinish }: AiToolPanelProp
                         await PromptGenerate(
                           outputRef.current?.innerHTML || "",
                           prompts,
+                          advancedOptionsConfig,
+                          includeAdvancedOptions,
                         );
                       }
                     }}

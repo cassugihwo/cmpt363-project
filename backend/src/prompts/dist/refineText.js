@@ -1,17 +1,48 @@
 "use strict";
 /* This file contains prompts for the AI text refinement functionality */
 exports.__esModule = true;
-exports.additionalConfigPrompt = exports.promptPrompt = exports.sliderPrompt = exports.startPrompt = exports.testPrompt = void 0;
+exports.buildAdvancedConfigText = exports.additionalConfigPrompt = exports.promptPrompt = exports.sliderPrompt = exports.startPrompt = exports.testPrompt = void 0;
 exports.testPrompt = "Write a haiku about Hu Tao from Genshin Impact.";
 exports.startPrompt = "# Rewrite Text\nI want some text to be rewritten.\n";
 exports.sliderPrompt = [
-    "## Slider Requirements\nI am going to give you an array of 'sliders' describing the requirements of the rewritten text.\nHere is an example of a slider: {\"label\":\"Tone\",\"level0\":\"Casual\",\"level100\":\"Professional\",\"value\":40}. What this slider means: if tone was a scale of 0 to 100, with Casual (\"level0\") at 0 and Professional (\"level100\") at 100, I would want the rewritten text to be rewritten at level 40 (\"value\")\u2014in between Casual and Professional but leaning slightly towards Casual. Keep in mind this is just an example. Use the actual sliders I will provide later.\n\nHere is the array of sliders:\n",
+    "## Slider Requirements\nI am going to give you a list of 'sliders' describing the requirements of the rewritten text.\nOn a scale of 0-100, rewrite the text with:\n",
     "\n## Text to rewrite\nFinally, here is the text I want you to rewrite:\n",
-    "\nIf you see any html tags in the text I provided, just ignore it, and only look at the text. \nApply all requirements when rewriting text. Apply all sliders.\nOnly output the rewritten text.",
+    "-- (end of text) --\n\nIf you see any html tags in the text I provided, just ignore it, and only look at the text. \nApply all requirements when rewriting text. Apply all sliders. Do not include text styling (bold, italics, etc.) in the rewritten text.\nOnly output the rewritten text.",
 ];
 exports.promptPrompt = [
-    "## Array of Prompts\nI am going to give you an array of prompts I have for the rewritten text. The array contains 'userPrompt's.\nEach userPrompt relates to how I want the text to be rewritten. \nFor example, a userPrompt could be \"Make the text more formal\". This means that I want the rewritten text to be more formal than the original text. It could also be \"This is for a class assignment\". This means I am providing you the context of the text (in this case, the text is for a class assignment). Try to understand each userPrompt accordingly. \n\nHere is the array of prompts:\n",
+    "## List of Prompts\nI am going to give you a list of prompts. Each prompt relates to how I want the text to be rewritten. \nFor example: a prompt could be \"Make the text more formal\". This means that I want the rewritten text to be more formal than the original text. It could also be \"This is for a class assignment\". This means I am providing you the context of the text (in this case, the text is for a class assignment). These are just examples, the actual prompts I give you can be anything. Just understand that each prompt is a requirement for how I want the text to be rewritten.\n\nHere is the list of prompts:\n",
     "\n## Text to rewrite\nFinally, here is the text I want you to rewrite:\n",
-    "\nIf you see any html tags in the text I provided, just ignore it, and only look at the text. \nApply all requirements when rewriting text. Apply all prompts.\nOnly output the rewritten text.",
+    "-- (end of text) --\n\nIf you see any html tags in the text I provided, just ignore it, and only look at the text. \nApply all requirements when rewriting text. Apply all prompts. Do not include text styling (bold, italics, etc.) in the rewritten text.\nOnly output the rewritten text.",
 ];
-exports.additionalConfigPrompt = "\n## Additional requirements\nAdditionally, I also have some additional requirements for the rewritten text. If the values of minWords and maxWords are null, just ignore them. Ignore any other empty values.\nHere are the additional requirements:\n";
+exports.additionalConfigPrompt = "\n## Additional requirements\nAdditionally, here are some additional requirements for the rewritten text. \n";
+function buildAdvancedConfigText(advancedOptions, includeAdvancedOptions) {
+    var minWords = advancedOptions && advancedOptions.minWords != null
+        ? "- Minimum words: " + advancedOptions.minWords + "\n"
+        : "";
+    var maxWords = advancedOptions && advancedOptions.maxWords != null
+        ? "- Maximum words: " + advancedOptions.maxWords + "\n"
+        : "";
+    var includeAll = advancedOptions && advancedOptions.includeAllWords != ""
+        ? "- Include all these words: " + advancedOptions.includeAllWords + "\n"
+        : "";
+    var includeExactPhrases = advancedOptions && advancedOptions.includeExactPhrases != ""
+        ? "- Include these exact phrases (separated by commas): " + advancedOptions.includeExactPhrases + "\n"
+        : "";
+    var includeAny = advancedOptions && advancedOptions.includeAnyWords != ""
+        ? "- Include any of these words: " + advancedOptions.includeAnyWords + "\n"
+        : "";
+    var includeNone = advancedOptions && advancedOptions.includeNoneWords != ""
+        ? "- Include none of these words: " + advancedOptions.includeNoneWords + "\n"
+        : "";
+    var advancedConfigText = includeAdvancedOptions
+        ? "" + exports.additionalConfigPrompt +
+            minWords +
+            maxWords +
+            includeAll +
+            includeExactPhrases +
+            includeAny +
+            includeNone
+        : "";
+    return advancedConfigText;
+}
+exports.buildAdvancedConfigText = buildAdvancedConfigText;

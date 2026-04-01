@@ -8,42 +8,80 @@ I want some text to be rewritten.
 
 export const sliderPrompt = [
   `## Slider Requirements
-I am going to give you an array of 'sliders' describing the requirements of the rewritten text.
-Here is an example of a slider: {"label":"Tone","level0":"Casual","level100":"Professional","value":40}. What this slider means: if tone was a scale of 0 to 100, with Casual ("level0") at 0 and Professional ("level100") at 100, I would want the rewritten text to be rewritten at level 40 ("value")—in between Casual and Professional but leaning slightly towards Casual. Keep in mind this is just an example. Use the actual sliders I will provide later.
-
-Here is the array of sliders:
+I am going to give you a list of 'sliders' describing the requirements of the rewritten text.
+On a scale of 0-100, rewrite the text with:
 `,
-`
+  `
 ## Text to rewrite
 Finally, here is the text I want you to rewrite:
 `,
-`
+  `-- (end of text) --
+
 If you see any html tags in the text I provided, just ignore it, and only look at the text. 
-Apply all requirements when rewriting text. Apply all sliders.
+Apply all requirements when rewriting text. Apply all sliders. Do not include text styling (bold, italics, etc.) in the rewritten text.
 Only output the rewritten text.`,
 ];
 
 export const promptPrompt = [
-  `## Array of Prompts
-I am going to give you an array of prompts I have for the rewritten text. The array contains 'userPrompt's.
-Each userPrompt relates to how I want the text to be rewritten. 
-For example, a userPrompt could be "Make the text more formal". This means that I want the rewritten text to be more formal than the original text. It could also be "This is for a class assignment". This means I am providing you the context of the text (in this case, the text is for a class assignment). Try to understand each userPrompt accordingly. 
+  `## List of Prompts
+I am going to give you a list of prompts. Each prompt relates to how I want the text to be rewritten. 
+For example: a prompt could be "Make the text more formal". This means that I want the rewritten text to be more formal than the original text. It could also be "This is for a class assignment". This means I am providing you the context of the text (in this case, the text is for a class assignment). These are just examples, the actual prompts I give you can be anything. Just understand that each prompt is a requirement for how I want the text to be rewritten.
 
-Here is the array of prompts:
+Here is the list of prompts:
 `,
-`
+  `
 ## Text to rewrite
 Finally, here is the text I want you to rewrite:
 `,
-`
+  `-- (end of text) --
+
 If you see any html tags in the text I provided, just ignore it, and only look at the text. 
-Apply all requirements when rewriting text. Apply all prompts.
+Apply all requirements when rewriting text. Apply all prompts. Do not include text styling (bold, italics, etc.) in the rewritten text.
 Only output the rewritten text.`,
 ];
 
-export const additionalConfigPrompt =
-  `
+export const additionalConfigPrompt = `
 ## Additional requirements
-Additionally, I also have some additional requirements for the rewritten text. If the values of minWords and maxWords are null, just ignore them. Ignore any other empty values.
-Here are the additional requirements:
+Additionally, here are some additional requirements for the rewritten text. 
 `;
+
+export function buildAdvancedConfigText(advancedOptions: any, includeAdvancedOptions: boolean): string {
+  const minWords =
+    advancedOptions && advancedOptions.minWords != null
+      ? `- Minimum words: ${advancedOptions.minWords}\n`
+      : "";
+  const maxWords =
+    advancedOptions && advancedOptions.maxWords != null
+      ? `- Maximum words: ${advancedOptions.maxWords}\n`
+      : "";
+  const includeAll =
+    advancedOptions && advancedOptions.includeAllWords != ""
+      ? `- Include all these words: ${advancedOptions.includeAllWords}\n`
+      : "";
+
+  const includeExactPhrases =
+    advancedOptions && advancedOptions.includeExactPhrases != ""
+      ? `- Include these exact phrases (separated by commas): ${advancedOptions.includeExactPhrases}\n`
+      : "";
+  const includeAny =
+    advancedOptions && advancedOptions.includeAnyWords != ""
+      ? `- Include any of these words: ${advancedOptions.includeAnyWords}\n`
+      : "";
+  const includeNone =
+    advancedOptions && advancedOptions.includeNoneWords != ""
+      ? `- Include none of these words: ${advancedOptions.includeNoneWords}\n`
+      : "";
+  
+  const advancedConfigText = includeAdvancedOptions
+    ? `${additionalConfigPrompt}` +
+      minWords +
+      maxWords +
+      includeAll +
+      includeExactPhrases +
+      includeAny +
+      includeNone
+    : "";
+
+  return advancedConfigText;
+}
+

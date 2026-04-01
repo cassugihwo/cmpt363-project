@@ -91,23 +91,23 @@ function CreateTab() {
 var INITIAL_SLIDERS = [
     {
         id: "tone",
-        label: "Tone",
-        level0: "Casual",
-        level100: "Professional",
+        label: "Professionalism",
+        level0: "Low",
+        level100: "High",
         value: 0
     },
     {
         id: "detail",
-        label: "Detail",
-        level0: "Concise",
-        level100: "Detailed",
+        label: "Complexity",
+        level0: "Low",
+        level100: "High",
         value: 0
     },
     {
-        id: "clarity",
-        label: "Clarity",
-        level0: "Natural",
-        level100: "Very Clear",
+        id: "emotion",
+        label: "Emotion",
+        level0: "Low",
+        level100: "High",
         value: 0
     },
 ];
@@ -126,10 +126,10 @@ var INITIAL_PROMPTS = [
 var INITIAL_ADVANCED_OPTIONS = {
     minWords: 0,
     maxWords: 300,
-    includeAllTheseWords: "",
-    includeTheseExactPhrases: "",
-    includeAnyOfTheseWords: "",
-    includeNoneOfTheseWords: "",
+    includeAllWords: "",
+    includeExactPhrases: "",
+    includeAnyWords: "",
+    includeNoneWords: "",
     temperature: 5,
     useSpelling: false
 };
@@ -200,8 +200,8 @@ function AiToolPanel(_a) {
         return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
             react_1["default"].createElement("button", { onClick: function () { return setAdvancedExpanded(!advancedExpanded); }, className: "flex items-center justify-between w-full hover:opacity-70 transition-opacity" },
                 react_1["default"].createElement("span", { className: "text-[#E9E9E9] text-[14px] font-semibold" }, "Advanced Options"),
-                react_1["default"].createElement(lucide_react_1.ChevronDown, { size: 16, color: "#898989", className: "transition-transform duration-200 " + (advancedExpanded ? 'rotate-180' : '') })),
-            advancedExpanded && (react_1["default"].createElement("div", { className: "mt-4 flex flex-col gap-5 pb-4 " + (!includeAdvancedOptions ? 'opacity-50' : '') },
+                react_1["default"].createElement(lucide_react_1.ChevronDown, { size: 16, color: "#898989", className: "transition-transform duration-200 " + (advancedExpanded ? "rotate-180" : "") })),
+            advancedExpanded && (react_1["default"].createElement("div", { className: "mt-4 flex flex-col gap-5 pb-4 " + (!includeAdvancedOptions ? "opacity-50" : "") },
                 react_1["default"].createElement("div", { className: "flex items-center" },
                     react_1["default"].createElement("input", { type: "checkbox", id: "includeAdvancedOptions", checked: includeAdvancedOptions, onChange: function (e) { return setIncludeAdvancedOptions(e.target.checked); }, className: "mr-2" }),
                     react_1["default"].createElement("label", { htmlFor: "includeAdvancedOptions", className: "text-[#E9E9E9] text-[13px]" }, "Include Advanced Options")),
@@ -220,23 +220,23 @@ function AiToolPanel(_a) {
                     react_1["default"].createElement("div", { className: "flex flex-col gap-2" }, [
                         {
                             ph: "All of these words...",
-                            val: advancedOptionsConfig.includeAllTheseWords,
-                            field: "includeAllTheseWords"
+                            val: advancedOptionsConfig.includeAllWords,
+                            field: "includeAllWords"
                         },
                         {
                             ph: "This exact phrase...",
-                            val: advancedOptionsConfig.includeTheseExactPhrases,
-                            field: "includeTheseExactPhrases"
+                            val: advancedOptionsConfig.includeExactPhrases,
+                            field: "includeExactPhrases"
                         },
                         {
                             ph: "Any of these words...",
-                            val: advancedOptionsConfig.includeAnyOfTheseWords,
-                            field: "includeAnyOfTheseWords"
+                            val: advancedOptionsConfig.includeAnyWords,
+                            field: "includeAnyWords"
                         },
                         {
                             ph: "None of these words...",
-                            val: advancedOptionsConfig.includeNoneOfTheseWords,
-                            field: "includeNoneOfTheseWords"
+                            val: advancedOptionsConfig.includeNoneWords,
+                            field: "includeNoneWords"
                         },
                     ].map(function (_a) {
                         var ph = _a.ph, val = _a.val, field = _a.field;
@@ -464,7 +464,7 @@ function AiToolPanel(_a) {
                                                 return [3 /*break*/, 4];
                                             case 2:
                                                 if (!(mode === "prompt")) return [3 /*break*/, 4];
-                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_b = outputRef.current) === null || _b === void 0 ? void 0 : _b.innerHTML) || "", prompts)];
+                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_b = outputRef.current) === null || _b === void 0 ? void 0 : _b.innerHTML) || "", prompts, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 3:
                                                 _c.sent();
                                                 _c.label = 4;
