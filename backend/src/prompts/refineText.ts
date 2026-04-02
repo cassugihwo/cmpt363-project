@@ -6,6 +6,10 @@ export const startPrompt = `# Rewrite Text
 I want some text to be rewritten.
 `;
 
+export const createStartPrompt = `# Write some text
+I want you to help me write some text. I will give you some requirements, and I want you to write text based on those requirements.
+`;
+
 export const sliderPrompt = [
   `## Slider Requirements
 I am going to give you a list of 'sliders' describing the requirements of the rewritten text.
@@ -40,12 +44,24 @@ Apply all requirements when rewriting text. Apply all prompts. Do not include te
 Only output the rewritten text.`,
 ];
 
+export const createPrompt = [
+  `## List of Prompts
+I am going to give you a list of prompts. Each prompt relates to how I want the text to be written. 
+
+Here is my list of prompts:
+`,
+  `
+Apply all requirements when writing text. Apply all prompts. Do not include text styling (bold, italics, etc.) in the text.
+Only output the written text.`,
+];
+
 export const additionalConfigPrompt = `
 ## Additional requirements
-Additionally, here are some additional requirements for the rewritten text. 
+Additionally, here are some additional requirements for the text. 
 `;
-
-export function buildAdvancedConfigText(advancedOptions: any, includeAdvancedOptions: boolean): string {
+export function buildAdvancedConfigText(
+  advancedOptions: any, 
+  includeAdvancedOptions: boolean): string {
   const minWords =
     advancedOptions && advancedOptions.minWords != null
       ? `- Minimum words: ${advancedOptions.minWords}\n`
@@ -74,6 +90,61 @@ export function buildAdvancedConfigText(advancedOptions: any, includeAdvancedOpt
   
   const advancedConfigText = includeAdvancedOptions
     ? `${additionalConfigPrompt}` +
+      minWords +
+      maxWords +
+      includeAll +
+      includeExactPhrases +
+      includeAny +
+      includeNone
+    : "";
+
+  return advancedConfigText;
+}
+
+export function createBuildAdvancedConfigText(
+  insertedCharacterCount: number,
+  toggleSelectInsertion: boolean,
+  advancedOptions: any,
+  includeAdvancedOptions: boolean,
+): string {
+
+  const charCount = toggleSelectInsertion && insertedCharacterCount > 5    
+  ? `- Approximate character count of text to be written: ${insertedCharacterCount} (around ${Math.round(insertedCharacterCount / 5)} words)\n`
+    : "";
+
+  const minWords =
+    advancedOptions &&
+    advancedOptions.minWords != null &&
+    !toggleSelectInsertion
+      ? `- Minimum words: ${advancedOptions.minWords}\n`
+      : "";
+  const maxWords =
+    advancedOptions &&
+    advancedOptions.maxWords != null &&
+    !toggleSelectInsertion
+      ? `- Maximum words: ${advancedOptions.maxWords}\n`
+      : "";
+  const includeAll =
+    advancedOptions && advancedOptions.includeAllWords != ""
+      ? `- Include all these words: ${advancedOptions.includeAllWords}\n`
+      : "";
+
+  const includeExactPhrases =
+    advancedOptions && advancedOptions.includeExactPhrases != ""
+      ? `- Include these exact phrases (separated by commas): ${advancedOptions.includeExactPhrases}\n`
+      : "";
+  const includeAny =
+    advancedOptions && advancedOptions.includeAnyWords != ""
+      ? `- Include any of these words: ${advancedOptions.includeAnyWords}\n`
+      : "";
+  const includeNone =
+    advancedOptions && advancedOptions.includeNoneWords != ""
+      ? `- Include none of these words: ${advancedOptions.includeNoneWords}\n`
+      : "";
+
+  const advancedConfigText = includeAdvancedOptions
+    ? `${additionalConfigPrompt}` +
+      charCount +
       minWords +
       maxWords +
       includeAll +

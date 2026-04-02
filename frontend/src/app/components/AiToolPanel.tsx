@@ -7,6 +7,7 @@ import {
   DebugFunction1,
   SliderGenerate, 
   PromptGenerate, 
+  CreateGenerate,
   TestSliderFunction, 
   TestPromptFunction, 
   type SliderConfig,
@@ -1090,7 +1091,21 @@ export function AiToolPanel({
                 >
                   Finish
                 </button>
-                <button className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">
+                <button 
+                onClick={async () => {
+                  setGeneratedText(
+                          await CreateGenerate(
+                            createPrompts,
+                            advancedOptionsConfig,
+                            insertedCharCount,
+                            includeAdvancedOptions,
+                            selectInsertionActive,
+                          ),
+                        );
+                }}
+                
+                
+                className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">
                   Generate
                 </button>
               </div>
