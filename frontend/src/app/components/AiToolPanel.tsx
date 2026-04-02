@@ -232,7 +232,7 @@ export function AiToolPanel({
   const [currentWords, setCurrentWords] = useState(0);
   const [advancedOptionsConfig, setAdvancedOptionsConfig] =
     useState<AdvancedOptionsConfig>(INITIAL_ADVANCED_OPTIONS);
-  const [includeAdvancedOptions, setIncludeAdvancedOptions] = useState(false);
+  const [includeAdvancedOptions, setIncludeAdvancedOptions] = useState(true);
   const [toggleCreateAdvanced, setToggleCreateAdvanced] = useState(false);
 
   const TICK_COUNT = 11; // 0 through 10

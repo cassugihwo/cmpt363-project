@@ -140,11 +140,43 @@ export function DocumentEditor({
   const [insertedCharCount, setInsertedCharCount] = useState(0);
 
   const handleFinish = (text: string) => {
-    if (storedRange && editorRef.current) {
-      storedRange.deleteContents();
-      storedRange.insertNode(document.createTextNode(text));
-      setStoredRange(null);
+    if (aiToolActiveTab === "create") {
+      
+    if (
+      insertedSpansRef.current.length > 0 &&
+      actualWordsRef.current.length > 0
+    ) {
+      // Add space at the beginning (before first span)
+
+      insertedSpansRef.current.forEach((span, index) => {
+        span.parentNode?.removeChild(span);
+      });
+      savedRangeRef.current?.deleteContents();
+      savedRangeRef.current = null;
+
+      // Update document content
+      if (activeDoc && editorRef.current) {
+        onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+      }
+
+      // Reset state
+      setWordInserted(false);
+      setShowFloatingButton(false);
+      setActualWord("");
+      setInsertedCharCount(0);
+      insertedSpanRef.current = null;
+      insertedSpansRef.current = [];
+      actualWordsRef.current = [];
     }
+    editorRef.current?.focus();
+    
+    }
+      if (storedRange && editorRef.current) {
+        storedRange.deleteContents();
+        storedRange.insertNode(document.createTextNode(` ${text} `));
+        setStoredRange(null);
+      }
+    
   };
 
   const execCmd = useCallback((cmd: string, value?: string) => {
@@ -172,7 +204,7 @@ export function DocumentEditor({
   // Insert word at cursor position
   const insertWordAtCursor = useCallback(() => {
     const word = generateRandomWord();
-    const obfuscated = "*".repeat(word.length);
+    const obfuscated = ".".repeat(word.length);
 
     if (savedRangeRef.current) {
       const selection = window.getSelection();
@@ -308,6 +340,7 @@ export function DocumentEditor({
       insertedSpanRef.current = null;
       insertedSpansRef.current = [];
       actualWordsRef.current = [];
+      savedRangeRef.current = null;
     }
     editorRef.current?.focus();
   }, [activeDoc, onUpdateDocument]);
@@ -344,7 +377,7 @@ export function DocumentEditor({
       // If mouse is ahead of selection end, add words
       if (mouseX > endX && distance > 30) {
         const word = generateRandomWord();
-        const obfuscated = "*".repeat(word.length);
+        const obfuscated = ".".repeat(word.length);
 
         // Create new span
         const newSpan = document.createElement("span");
@@ -473,7 +506,7 @@ export function DocumentEditor({
         // Position button above cursor
         const buttonWidth = 100; // Approximate button width
         const buttonHeight = 40; // Approximate button height with offset
-        const x = rect.left + rect.width / 2 - buttonWidth / 2;
+        const x = rect.left;
         const y = rect.top - buttonHeight;
 
         setFloatingButtonPosition({ x, y });
@@ -816,16 +849,6 @@ export function DocumentEditor({
                 top: `${floatingButtonPosition.y}px`,
               }}
             >
-              <button
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  acceptWord();
-                }}
-                className="bg-[#22C55E] hover:bg-[#16A34A] text-white p-2 rounded-lg shadow-lg transition-colors"
-                title="Accept word"
-              >
-                <Check size={18} />
-              </button>
               <button
                 onMouseDown={(e) => {
                   e.preventDefault();
