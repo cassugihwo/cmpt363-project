@@ -109,7 +109,7 @@ export function createBuildAdvancedConfigText(
 ): string {
 
   const charCount = toggleSelectInsertion && insertedCharacterCount > 5    
-  ? `- Approximate character count of text to be written: ${insertedCharacterCount} (around ${Math.round(insertedCharacterCount / 5)} words)\n`
+  ? `- Write around this many words: ${Math.round(insertedCharacterCount / 5)} words\n`
     : "";
 
   const minWords =

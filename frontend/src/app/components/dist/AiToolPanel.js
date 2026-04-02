@@ -171,18 +171,20 @@ function AiToolPanel(_a) {
     var _l = react_1.useState(false), advancedExpanded = _l[0], setAdvancedExpanded = _l[1];
     var _m = react_1.useState(null), editingLabelId = _m[0], setEditingLabelId = _m[1];
     var _o = react_1.useState(""), tempLabelValue = _o[0], setTempLabelValue = _o[1];
-    var _p = react_1.useState(""), generatedText = _p[0], setGeneratedText = _p[1];
-    var _q = react_1.useState(null), openMenuId = _q[0], setOpenMenuId = _q[1];
+    var _p = react_1.useState(false), showToast = _p[0], setShowToast = _p[1];
+    var _q = react_1.useState(""), generatedText = _q[0], setGeneratedText = _q[1];
+    var _r = react_1.useState(""), createdText = _r[0], setCreatedText = _r[1];
+    var _s = react_1.useState(null), openMenuId = _s[0], setOpenMenuId = _s[1];
     var inputRef = react_1.useRef(null);
-    var outputRef = react_1.useRef(null);
+    var rewriteOutputRef = react_1.useRef(null);
     var createOutputRef = react_1.useRef(null);
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _r = react_1.useState(250), currentWords = _r[0], setCurrentWords = _r[1];
-    var _s = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _s[0], setAdvancedOptionsConfig = _s[1];
-    var _t = react_1.useState(false), includeAdvancedOptions = _t[0], setIncludeAdvancedOptions = _t[1];
-    var _u = react_1.useState(false), toggleCreateAdvanced = _u[0], setToggleCreateAdvanced = _u[1];
+    var _t = react_1.useState(250), currentWords = _t[0], setCurrentWords = _t[1];
+    var _u = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _u[0], setAdvancedOptionsConfig = _u[1];
+    var _v = react_1.useState(false), includeAdvancedOptions = _v[0], setIncludeAdvancedOptions = _v[1];
+    var _w = react_1.useState(false), toggleCreateAdvanced = _w[0], setToggleCreateAdvanced = _w[1];
     var TICK_COUNT = 11; // 0 through 10
     react_1["default"].useEffect(function () {
         onTabChange === null || onTabChange === void 0 ? void 0 : onTabChange(activeTab || "rewrite");
@@ -338,17 +340,23 @@ function AiToolPanel(_a) {
     }, [openMenuId]);
     // Set selected text in output when provided and output is empty
     react_1.useEffect(function () {
-        if (selectedText && outputRef.current && generatedText === "") {
-            outputRef.current.innerHTML = selectedText;
+        if (selectedText && rewriteOutputRef.current && generatedText === "") {
+            rewriteOutputRef.current.innerHTML = selectedText;
         }
     }, [selectedText]);
     react_1.useEffect(function () {
-        if (outputRef.current && !(generatedText === "")) {
-            outputRef.current.innerHTML = generatedText;
+        if (rewriteOutputRef.current && !(generatedText === "")) {
+            rewriteOutputRef.current.innerHTML = generatedText;
         }
     }, [generatedText]);
+    react_1.useEffect(function () {
+        if (createOutputRef.current && !(createdText === "")) {
+            createOutputRef.current.innerHTML = createdText;
+        }
+    }, [createdText]);
     return (react_1["default"].createElement(react_1["default"].Fragment, null,
         showAdvanced && (react_1["default"].createElement(AdvancedOptionsModal_1.AdvancedOptionsModal, { onClose: function () { return setShowAdvanced(false); } })),
+        showToast && (react_1["default"].createElement("div", { className: "fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#303030] text-[#E9E9E9] px-4 py-2 rounded-lg shadow-lg z-50" }, "Text copied to clipboard")),
         react_1["default"].createElement("div", { className: "flex flex-col bg-[#303030] w-[370px] flex-shrink-0 h-full border-l border-[#898989]/20 relative" },
             react_1["default"].createElement("div", { className: "px-4 pt-4 pb-3 flex-shrink-0" },
                 react_1["default"].createElement("div", { className: "flex items-center gap-3 mb-3" },
@@ -384,7 +392,7 @@ function AiToolPanel(_a) {
             activeTab === "rewrite" && (react_1["default"].createElement(react_1["default"].Fragment, null,
                 react_1["default"].createElement("div", { className: "mx-4 mb-3 flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "relative bg-white rounded-[6px] h-[168px] overflow-y-auto" },
-                        react_1["default"].createElement("div", { ref: outputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Select some text to rewrite", className: "ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3" })),
+                        react_1["default"].createElement("div", { ref: rewriteOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Select some text to rewrite", className: "ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3" })),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between mt-2 px-1" },
                         react_1["default"].createElement("div", { className: "flex items-center gap-2" },
                             react_1["default"].createElement("div", { className: "w-2 h-2 rounded-full bg-[#8149EC]" }),
@@ -451,11 +459,20 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
-                        react_1["default"].createElement("button", { onClick: function () {
-                                var _a;
-                                setGeneratedText("");
-                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
-                            }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("div", { className: "flex items-center justify-between gap-5" },
+                            react_1["default"].createElement("button", { onClick: function () {
+                                    var _a;
+                                    setGeneratedText("");
+                                    onFinish(((_a = rewriteOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
+                                }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                            react_1["default"].createElement("button", { onClick: function () {
+                                    var _a;
+                                    var text = ((_a = rewriteOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "";
+                                    navigator.clipboard.writeText(text);
+                                    setShowToast(true);
+                                    setTimeout(function () { return setShowToast(false); }, 1500);
+                                }, className: "clipboard-button" },
+                                react_1["default"].createElement(lucide_react_1.Clipboard, { size: 23 }))),
                         react_1["default"].createElement("div", { className: "flex items-center gap-3" },
                             react_1["default"].createElement("button", { onClick: function () { return __awaiter(_this, void 0, void 0, function () {
                                     var _a, _b;
@@ -465,14 +482,14 @@ function AiToolPanel(_a) {
                                             case 0:
                                                 if (!(mode === "slider")) return [3 /*break*/, 2];
                                                 _a = setGeneratedText;
-                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_c = outputRef.current) === null || _c === void 0 ? void 0 : _c.innerHTML) || "", sliders, advancedOptionsConfig, includeAdvancedOptions)];
+                                                return [4 /*yield*/, ApiFunctions_1.SliderGenerate(((_c = rewriteOutputRef.current) === null || _c === void 0 ? void 0 : _c.innerHTML) || "", sliders, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 1:
                                                 _a.apply(void 0, [_e.sent()]);
                                                 return [3 /*break*/, 4];
                                             case 2:
                                                 if (!(mode === "prompt")) return [3 /*break*/, 4];
                                                 _b = setGeneratedText;
-                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_d = outputRef.current) === null || _d === void 0 ? void 0 : _d.innerHTML) || "", prompts, advancedOptionsConfig, includeAdvancedOptions)];
+                                                return [4 /*yield*/, ApiFunctions_1.PromptGenerate(((_d = rewriteOutputRef.current) === null || _d === void 0 ? void 0 : _d.innerHTML) || "", prompts, advancedOptionsConfig, includeAdvancedOptions)];
                                             case 3:
                                                 _b.apply(void 0, [_e.sent()]);
                                                 _e.label = 4;
@@ -529,17 +546,26 @@ function AiToolPanel(_a) {
                 react_1["default"].createElement("div", { className: "flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "h-px bg-[#898989]/30 mx-4" }),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between px-4 py-3" },
-                        react_1["default"].createElement("button", { onClick: function () {
-                                var _a;
-                                setGeneratedText("");
-                                onFinish(((_a = outputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
-                            }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                        react_1["default"].createElement("div", { className: "flex items-center justify-between gap-5" },
+                            react_1["default"].createElement("button", { onClick: function () {
+                                    var _a;
+                                    setGeneratedText("");
+                                    onFinish(((_a = createOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "");
+                                }, className: "bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors" }, "Finish"),
+                            react_1["default"].createElement("button", { onClick: function () {
+                                    var _a;
+                                    var text = ((_a = createOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerHTML) || "";
+                                    navigator.clipboard.writeText(text);
+                                    setShowToast(true);
+                                    setTimeout(function () { return setShowToast(false); }, 1500);
+                                }, className: "clipboard-button" },
+                                react_1["default"].createElement(lucide_react_1.Clipboard, { size: 23 }))),
                         react_1["default"].createElement("button", { onClick: function () { return __awaiter(_this, void 0, void 0, function () {
                                 var _a;
                                 return __generator(this, function (_b) {
                                     switch (_b.label) {
                                         case 0:
-                                            _a = setGeneratedText;
+                                            _a = setCreatedText;
                                             return [4 /*yield*/, ApiFunctions_1.CreateGenerate(createPrompts, advancedOptionsConfig, insertedCharCount, includeAdvancedOptions, selectInsertionActive)];
                                         case 1:
                                             _a.apply(void 0, [_b.sent()]);
@@ -547,6 +573,6 @@ function AiToolPanel(_a) {
                                     }
                                 });
                             }); }, className: "bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors" }, "Generate"))))),
-            react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          .create-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n        "))));
+            react_1["default"].createElement("style", null, "\n          .ai-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          .create-output-editable:empty::before {\n            content: attr(data-placeholder);\n            color: #A6A6A6;\n            display: block;\n            text-align: center;\n            padding-top: 54px;\n            pointer-events: none;\n          }\n          input[type='range']::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            appearance: none;\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          input[type='range']::-moz-range-thumb {\n            width: 16px;\n            height: 16px;\n            border-radius: 50%;\n            background: white;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.4);\n          }\n          .adv-temp-slider::-webkit-slider-thumb {\n            -webkit-appearance: none;\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .adv-temp-slider::-moz-range-thumb {\n            width: 18px;\n            height: 18px;\n            border-radius: 50%;\n            background: #E9E9E9;\n            cursor: pointer;\n            border: none;\n            box-shadow: 0 1px 4px rgba(0,0,0,0.5);\n          }\n          .clipboard-button svg {\n            color: #898989;\n          }\n          .clipboard-button:hover svg {\n            color: #E9E9E9;\n          }\n        "))));
 }
 exports.AiToolPanel = AiToolPanel;

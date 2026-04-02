@@ -53,7 +53,7 @@ function buildAdvancedConfigText(advancedOptions, includeAdvancedOptions) {
 exports.buildAdvancedConfigText = buildAdvancedConfigText;
 function createBuildAdvancedConfigText(insertedCharacterCount, toggleSelectInsertion, advancedOptions, includeAdvancedOptions) {
     var charCount = toggleSelectInsertion && insertedCharacterCount > 5
-        ? "- Approximate character count of text to be written: " + insertedCharacterCount + " (around " + Math.round(insertedCharacterCount / 5) + " words)\n"
+        ? "- Write around this many words: " + Math.round(insertedCharacterCount / 5) + " words\n"
         : "";
     var minWords = advancedOptions &&
         advancedOptions.minWords != null &&

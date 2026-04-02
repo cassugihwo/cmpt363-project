@@ -1,5 +1,5 @@
 import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
-import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Trash2, Pencil, Wand2, HelpCircle, ChevronUp, Plus } from 'lucide-react';
+import { X, Send, MoreVertical, ChevronDown, Sliders, MessageSquare, RotateCcw, ChevronLeft, ChevronRight, Trash2, Pencil, Wand2, HelpCircle, ChevronUp, Plus, Clipboard} from 'lucide-react';
 import { AdvancedOptionsModal } from "./AdvancedOptionsModal";
 import { 
   DebugFunctions, 
@@ -218,10 +218,12 @@ export function AiToolPanel({
   const [advancedExpanded, setAdvancedExpanded] = useState(false);
   const [editingLabelId, setEditingLabelId] = useState<string | null>(null);
   const [tempLabelValue, setTempLabelValue] = useState("");
+  const [showToast, setShowToast] = useState(false);
   const [generatedText, setGeneratedText] = useState("");
+  const [createdText, setCreatedText] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const outputRef = useRef<HTMLDivElement>(null);
+  const rewriteOutputRef = useRef<HTMLDivElement>(null);
   const createOutputRef = useRef<HTMLDivElement>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -593,22 +595,35 @@ export function AiToolPanel({
 
   // Set selected text in output when provided and output is empty
   useEffect(() => {
-    if (selectedText && outputRef.current && generatedText === "") {
-      outputRef.current.innerHTML = selectedText;
+    if (selectedText && rewriteOutputRef.current && generatedText === "") {
+      rewriteOutputRef.current.innerHTML = selectedText;
     }
   }, [selectedText]);
 
   useEffect(() => {
-    if (outputRef.current && !(generatedText === "")) {
-      outputRef.current.innerHTML = generatedText;
+    if (rewriteOutputRef.current && !(generatedText === "")) {
+      rewriteOutputRef.current.innerHTML = generatedText;
     }
   }, [generatedText]);
+
+  useEffect(() => {
+    if (createOutputRef.current && !(createdText === "")) {
+      createOutputRef.current.innerHTML = createdText;
+    }
+  }, [createdText]);
 
   return (
     <>
       {/* Advanced Options Modal */}
       {showAdvanced && (
         <AdvancedOptionsModal onClose={() => setShowAdvanced(false)} />
+      )}
+
+      {/* Toast */}
+      {showToast && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-[#303030] text-[#E9E9E9] px-4 py-2 rounded-lg shadow-lg z-50">
+          Text copied to clipboard
+        </div>
       )}
 
       <div className="flex flex-col bg-[#303030] w-[370px] flex-shrink-0 h-full border-l border-[#898989]/20 relative">
@@ -722,7 +737,7 @@ export function AiToolPanel({
             <div className="mx-4 mb-3 flex-shrink-0">
               <div className="relative bg-white rounded-[6px] h-[168px] overflow-y-auto">
                 <div
-                  ref={outputRef}
+                  ref={rewriteOutputRef}
                   contentEditable
                   suppressContentEditableWarning
                   data-placeholder="Select some text to rewrite"
@@ -913,22 +928,35 @@ export function AiToolPanel({
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
-                <button
-                  onClick={() => {
-                    setGeneratedText("");
-                    onFinish(outputRef.current?.innerHTML || "");
-                  }}
-                  className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
-                >
-                  Finish
-                </button>
+                <div className="flex items-center justify-between gap-5">
+                  <button
+                    onClick={() => {
+                      setGeneratedText("");
+                      onFinish(rewriteOutputRef.current?.innerHTML || "");
+                    }}
+                    className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
+                  >
+                    Finish
+                  </button>
+                  <button
+                    onClick={() => {
+                      const text = rewriteOutputRef.current?.innerHTML || "";
+                      navigator.clipboard.writeText(text);
+                      setShowToast(true);
+                      setTimeout(() => setShowToast(false), 1500);
+                    }}
+                    className="clipboard-button"
+                  >
+                    <Clipboard size={23} />
+                  </button>
+                </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={async () => {
                       if (mode === "slider") {
                         setGeneratedText(
                           await SliderGenerate(
-                            outputRef.current?.innerHTML || "",
+                            rewriteOutputRef.current?.innerHTML || "",
                             sliders,
                             advancedOptionsConfig,
                             includeAdvancedOptions,
@@ -937,7 +965,7 @@ export function AiToolPanel({
                       } else if (mode === "prompt") {
                         setGeneratedText(
                           await PromptGenerate(
-                            outputRef.current?.innerHTML || "",
+                            rewriteOutputRef.current?.innerHTML || "",
                             prompts,
                             advancedOptionsConfig,
                             includeAdvancedOptions,
@@ -955,7 +983,6 @@ export function AiToolPanel({
           </>
         )}
 
-        {/* activeTab === "create" && <CreateTab /> */}
         {/* ── CREATE TAB ── */}
         {activeTab === "create" && (
           <>
@@ -1082,30 +1109,42 @@ export function AiToolPanel({
             <div className="flex-shrink-0">
               <div className="h-px bg-[#898989]/30 mx-4" />
               <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center justify-between gap-5">
+                  <button
+                    onClick={() => {
+                      setGeneratedText("");
+                      onFinish(createOutputRef.current?.innerHTML || "");
+                    }}
+                    className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
+                  >
+                    Finish
+                  </button>
+                  <button
+                    onClick={() => {
+                      const text = createOutputRef.current?.innerHTML || "";
+                      navigator.clipboard.writeText(text);
+                      setShowToast(true);
+                      setTimeout(() => setShowToast(false), 1500);
+                    }}
+                    className="clipboard-button"
+                  >
+                    <Clipboard size={23} />
+                  </button>
+                </div>
                 <button
-                  onClick={() => {
-                    setGeneratedText("");
-                    onFinish(outputRef.current?.innerHTML || "");
+                  onClick={async () => {
+                    setCreatedText(
+                      await CreateGenerate(
+                        createPrompts,
+                        advancedOptionsConfig,
+                        insertedCharCount,
+                        includeAdvancedOptions,
+                        selectInsertionActive,
+                      ),
+                    );
                   }}
-                  className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
+                  className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors"
                 >
-                  Finish
-                </button>
-                <button 
-                onClick={async () => {
-                  setGeneratedText(
-                          await CreateGenerate(
-                            createPrompts,
-                            advancedOptionsConfig,
-                            insertedCharCount,
-                            includeAdvancedOptions,
-                            selectInsertionActive,
-                          ),
-                        );
-                }}
-                
-                
-                className="bg-[#8149EC] text-[#E9E9E9] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#7040db] transition-colors">
                   Generate
                 </button>
               </div>
@@ -1167,6 +1206,12 @@ export function AiToolPanel({
             cursor: pointer;
             border: none;
             box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+          }
+          .clipboard-button svg {
+            color: #898989;
+          }
+          .clipboard-button:hover svg {
+            color: #E9E9E9;
           }
         `}</style>
       </div>
