@@ -103,8 +103,8 @@ var EXAMPLE_CREATE_PROMPTS = [
     { label: "Prompt 3", text: "Include the word \"environment\"." },
 ];
 var INITIAL_ADVANCED_OPTIONS = {
-    minWords: 0,
-    maxWords: 300,
+    minWords: null,
+    maxWords: null,
     includeAllWords: "",
     includeExactPhrases: "",
     includeAnyWords: "",
@@ -181,14 +181,30 @@ function AiToolPanel(_a) {
     var labelInputRef = react_1.useRef(null);
     var menuRef = react_1.useRef(null);
     // Advanced options state
-    var _t = react_1.useState(250), currentWords = _t[0], setCurrentWords = _t[1];
+    var _t = react_1.useState(0), currentWords = _t[0], setCurrentWords = _t[1];
     var _u = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _u[0], setAdvancedOptionsConfig = _u[1];
     var _v = react_1.useState(false), includeAdvancedOptions = _v[0], setIncludeAdvancedOptions = _v[1];
     var _w = react_1.useState(false), toggleCreateAdvanced = _w[0], setToggleCreateAdvanced = _w[1];
     var TICK_COUNT = 11; // 0 through 10
     react_1["default"].useEffect(function () {
         onTabChange === null || onTabChange === void 0 ? void 0 : onTabChange(activeTab || "rewrite");
+        if (activeTab === "rewrite") {
+            setCurrentWords(getRewriteWordCount());
+        }
+        else if (activeTab === "create") {
+            setCurrentWords(getCreateWordCount());
+        }
     }, [activeTab, onTabChange]);
+    var getRewriteWordCount = function () {
+        var _a;
+        var text = ((_a = rewriteOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerText) || '';
+        return text.trim().split(/\s+/).filter(function (word) { return word.length > 0; }).length;
+    };
+    var getCreateWordCount = function () {
+        var _a;
+        var text = ((_a = createOutputRef.current) === null || _a === void 0 ? void 0 : _a.innerText) || '';
+        return text.trim().split(/\s+/).filter(function (word) { return word.length > 0; }).length;
+    };
     function AdvancedOptionsSection() {
         return (react_1["default"].createElement("div", { className: "border-t border-[#555] pt-4 mt-1" },
             react_1["default"].createElement("button", { onClick: function () { return setAdvancedExpanded(!advancedExpanded); }, className: "flex items-center justify-between w-full hover:opacity-70 transition-opacity" },
@@ -342,11 +358,13 @@ function AiToolPanel(_a) {
     react_1.useEffect(function () {
         if (selectedText && rewriteOutputRef.current && generatedText === "") {
             rewriteOutputRef.current.innerHTML = selectedText;
+            setCurrentWords(getRewriteWordCount());
         }
     }, [selectedText]);
     react_1.useEffect(function () {
         if (rewriteOutputRef.current && !(generatedText === "")) {
             rewriteOutputRef.current.innerHTML = generatedText;
+            setCurrentWords(getRewriteWordCount());
         }
     }, [generatedText]);
     react_1.useEffect(function () {
@@ -392,7 +410,7 @@ function AiToolPanel(_a) {
             activeTab === "rewrite" && (react_1["default"].createElement(react_1["default"].Fragment, null,
                 react_1["default"].createElement("div", { className: "mx-4 mb-3 flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "relative bg-white rounded-[6px] h-[168px] overflow-y-auto" },
-                        react_1["default"].createElement("div", { ref: rewriteOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Select some text to rewrite", className: "ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3" })),
+                        react_1["default"].createElement("div", { ref: rewriteOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Select some text to rewrite", className: "ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3", onInput: function () { return setCurrentWords(getRewriteWordCount()); } })),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between mt-2 px-1" },
                         react_1["default"].createElement("div", { className: "flex items-center gap-2" },
                             react_1["default"].createElement("div", { className: "w-2 h-2 rounded-full bg-[#8149EC]" }),
@@ -500,7 +518,7 @@ function AiToolPanel(_a) {
             activeTab === "create" && (react_1["default"].createElement(react_1["default"].Fragment, null,
                 react_1["default"].createElement("div", { className: "mx-4 mb-3 flex-shrink-0" },
                     react_1["default"].createElement("div", { className: "relative bg-white rounded-[6px] h-[168px] overflow-y-auto" },
-                        react_1["default"].createElement("div", { ref: createOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Your generated content will appear here", className: "create-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3" })),
+                        react_1["default"].createElement("div", { ref: createOutputRef, contentEditable: true, suppressContentEditableWarning: true, "data-placeholder": "Your generated content will appear here", className: "create-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3", onInput: function () { return setCurrentWords(getCreateWordCount()); } })),
                     react_1["default"].createElement("div", { className: "flex items-center justify-between mt-2 px-1" },
                         react_1["default"].createElement("div", { className: "flex items-center gap-2" },
                             react_1["default"].createElement("div", { className: "w-2 h-2 rounded-full bg-[#8149EC]" }),

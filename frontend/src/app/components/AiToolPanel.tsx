@@ -75,8 +75,8 @@ const EXAMPLE_CREATE_PROMPTS = [
 ];
 
 const INITIAL_ADVANCED_OPTIONS: AdvancedOptionsConfig = {
-  minWords: 0,
-  maxWords: 300,
+  minWords: null,
+  maxWords: null,
   includeAllWords: "",
   includeExactPhrases: "",
   includeAnyWords: "",
@@ -229,7 +229,7 @@ export function AiToolPanel({
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Advanced options state
-  const [currentWords, setCurrentWords] = useState(250);
+  const [currentWords, setCurrentWords] = useState(0);
   const [advancedOptionsConfig, setAdvancedOptionsConfig] =
     useState<AdvancedOptionsConfig>(INITIAL_ADVANCED_OPTIONS);
   const [includeAdvancedOptions, setIncludeAdvancedOptions] = useState(false);
@@ -237,9 +237,28 @@ export function AiToolPanel({
 
   const TICK_COUNT = 11; // 0 through 10
 
+
+
   React.useEffect(() => {
     onTabChange?.(activeTab || "rewrite");
+    if(activeTab === "rewrite") {
+      setCurrentWords(getRewriteWordCount());
+    }
+      else if (activeTab === "create") {
+        setCurrentWords(getCreateWordCount());
+    }
   }, [activeTab, onTabChange]);
+
+
+  const getRewriteWordCount = () => {
+    const text = rewriteOutputRef.current?.innerText || '';
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  const getCreateWordCount = () => {
+    const text = createOutputRef.current?.innerText || '';
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
 
   function AdvancedOptionsSection() {
     return (
@@ -597,12 +616,14 @@ export function AiToolPanel({
   useEffect(() => {
     if (selectedText && rewriteOutputRef.current && generatedText === "") {
       rewriteOutputRef.current.innerHTML = selectedText;
+      setCurrentWords(getRewriteWordCount());
     }
   }, [selectedText]);
 
   useEffect(() => {
     if (rewriteOutputRef.current && !(generatedText === "")) {
       rewriteOutputRef.current.innerHTML = generatedText;
+      setCurrentWords(getRewriteWordCount());
     }
   }, [generatedText]);
 
@@ -742,6 +763,7 @@ export function AiToolPanel({
                   suppressContentEditableWarning
                   data-placeholder="Select some text to rewrite"
                   className="ai-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3"
+                  onInput={() => setCurrentWords(getRewriteWordCount())}
                 />
               </div>
               <div className="flex items-center justify-between mt-2 px-1">
@@ -995,6 +1017,7 @@ export function AiToolPanel({
                   suppressContentEditableWarning
                   data-placeholder="Your generated content will appear here"
                   className="create-output-editable w-full min-h-[144px] outline-none text-[#1a1a1a] text-[13px] leading-[1.6] px-3 py-3"
+                  onInput={() => setCurrentWords(getCreateWordCount())}
                 />
               </div>
               <div className="flex items-center justify-between mt-2 px-1">
