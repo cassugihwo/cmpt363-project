@@ -20,6 +20,9 @@ interface AiToolPanelProps {
   onClose: () => void;
   activeTab?: "rewrite" | "create";
   onTabChange?: (tab: "rewrite" | "create") => void;
+  selectInsertionActive?: boolean;
+  onSelectInsertionToggle?: (active: boolean) => void;
+  insertedCharCount?: number;
 }
 
 const INITIAL_SLIDERS: SliderConfig[] = [
@@ -99,7 +102,7 @@ function NumberField({
   );
 }
 
-export function AiToolPanel({ onClose, activeTab, onTabChange }: AiToolPanelProps) {
+export function AiToolPanel({ onClose, activeTab, onTabChange, selectInsertionActive = false, onSelectInsertionToggle, insertedCharCount = 0 }: AiToolPanelProps) {
   const [mode, setMode] = useState<"slider" | "prompt">("slider");
   const [sliders, setSliders] = useState<SliderConfig[]>(INITIAL_SLIDERS);
   const [prompts, setPrompts] = useState<Prompt[]>(INITIAL_PROMPTS);
@@ -613,6 +616,41 @@ export function AiToolPanel({ onClose, activeTab, onTabChange }: AiToolPanelProp
 
             {/* Scrollable prompt list */}
             <div className="flex-1 overflow-y-auto px-4 min-h-0">
+              {/* Select insertion toggle section */}
+              <div className="mb-4">
+                <button
+                  onClick={() => onSelectInsertionToggle?.(!selectInsertionActive)}
+                  className="flex items-start gap-3 w-full text-left group"
+                >
+                  {/* Checkbox */}
+                  <div
+                    className={`w-[15px] h-[15px] rounded-[3px] border-2 flex items-center justify-center flex-shrink-0 mt-[1px] transition-colors ${
+                      selectInsertionActive
+                        ? "bg-[#8149EC] border-[#8149EC]"
+                        : "bg-transparent border-[#898989] group-hover:border-[#A6A6A6]"
+                    }`}
+                  >
+                    {selectInsertionActive && (
+                      <svg viewBox="0 0 10 8" fill="none" className="w-[9px] h-[9px]">
+                        <path d="M1 3.5L3.8 6.5L9 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="text-[#E9E9E9] text-[12px] leading-[1.4]">
+                    Select space in the document to insert generated text.
+                  </span>
+                </button>
+                {/* Character count */}
+                <p className="text-[#898989] text-[11px] mt-1.5 ml-[27px]">
+                  {selectInsertionActive
+                    ? `${insertedCharCount} character${insertedCharCount !== 1 ? "s" : ""} selected`
+                    : "0 characters selected"}
+                </p>
+              </div>
+
+              <div className="h-px bg-[#898989]/30 mb-3" />
+
+              {/* Section header */}
               <div className="flex items-center justify-between py-2 mb-1">
                 <span className="text-[#E9E9E9] text-[13px] font-medium">Describe what you want to create</span>
               </div>

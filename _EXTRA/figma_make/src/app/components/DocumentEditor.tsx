@@ -18,7 +18,7 @@ import {
   ChevronUp,
   Baseline,
   Check,
-  Trash2,
+  X,
   ChevronRight,
 } from "lucide-react";
 import { AiToolPanel } from "./AiToolPanel";
@@ -125,6 +125,10 @@ export function DocumentEditor({
   const actualWordsRef = useRef<string[]>([]);
   const lastMousePosRef = useRef({ x: 0, y: 0 });
 
+  // Select text insertion toggle + char count
+  const [selectInsertionActive, setSelectInsertionActive] = useState(false);
+  const [insertedCharCount, setInsertedCharCount] = useState(0);
+
   const execCmd = useCallback((cmd: string, value?: string) => {
     window.document.execCommand(cmd, false, value);
     editorRef.current?.focus();
@@ -184,6 +188,7 @@ export function DocumentEditor({
         // Store actual word
         setActualWord(word);
         setWordInserted(true);
+        setInsertedCharCount(word.length);
         
         // Position drag button to the right of the word
         const rect = span.getBoundingClientRect();
@@ -250,6 +255,7 @@ export function DocumentEditor({
       setWordInserted(false);
       setShowFloatingButton(false);
       setActualWord("");
+      setInsertedCharCount(0);
       insertedSpanRef.current = null;
       insertedSpansRef.current = [];
       actualWordsRef.current = [];
@@ -276,6 +282,7 @@ export function DocumentEditor({
       setWordInserted(false);
       setShowFloatingButton(false);
       setActualWord("");
+      setInsertedCharCount(0);
       insertedSpanRef.current = null;
       insertedSpansRef.current = [];
       actualWordsRef.current = [];
@@ -350,6 +357,10 @@ export function DocumentEditor({
       if (activeDoc && editorRef.current) {
         onUpdateDocument(activeDoc.id, editorRef.current.innerText);
       }
+
+      // Update char count
+      const newTotal = actualWordsRef.current.reduce((sum, w) => sum + w.length, 0);
+      setInsertedCharCount(newTotal);
     }
     // If mouse is behind selection end and we have more than 1 word, remove words
     else if (mouseX < endX - 30 && insertedSpansRef.current.length > 1) {
@@ -384,6 +395,10 @@ export function DocumentEditor({
         if (activeDoc && editorRef.current) {
           onUpdateDocument(activeDoc.id, editorRef.current.innerText);
         }
+
+        // Update char count
+        const newTotal = actualWordsRef.current.reduce((sum, w) => sum + w.length, 0);
+        setInsertedCharCount(newTotal);
       }
     }
   }, [isDragging, generateRandomWord, activeDoc, onUpdateDocument]);
@@ -412,6 +427,8 @@ export function DocumentEditor({
     setShowStyleMenu(false);
     setShowFontMenu(false);
 
+    if (!selectInsertionActive) return;
+
     const selection = window.getSelection();
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -426,6 +443,25 @@ export function DocumentEditor({
       
       setFloatingButtonPosition({ x, y });
       setShowFloatingButton(true);
+    }
+  }, [selectInsertionActive]);
+
+  // Handle select insertion toggle
+  const handleSelectInsertionToggle = useCallback((active: boolean) => {
+    setSelectInsertionActive(active);
+    if (!active) {
+      // Clear everything when toggled off
+      if (insertedSpansRef.current.length > 0) {
+        insertedSpansRef.current.forEach(span => { if (span) span.remove(); });
+        insertedSpansRef.current = [];
+        actualWordsRef.current = [];
+        insertedSpanRef.current = null;
+      }
+      setWordInserted(false);
+      setShowFloatingButton(false);
+      setActualWord("");
+      setInsertedCharCount(0);
+      savedRangeRef.current = null;
     }
   }, []);
 
@@ -670,8 +706,8 @@ export function DocumentEditor({
             style={{ fontFamily, caretColor: "#333" }}
           />
           
-          {/* Floating button above cursor - only show when Create tab is active */}
-          {showFloatingButton && !wordInserted && aiToolActiveTab === "create" && (
+          {/* Floating button above cursor - only show when Create tab is active and toggle is on */}
+          {showFloatingButton && !wordInserted && aiToolActiveTab === "create" && selectInsertionActive && (
             <button
               onMouseDown={(e) => {
                 e.preventDefault();
@@ -714,7 +750,7 @@ export function DocumentEditor({
                 className="bg-[#EF4444] hover:bg-[#DC2626] text-white p-2 rounded-lg shadow-lg transition-colors"
                 title="Delete word"
               >
-                <Trash2 size={18} />
+                <X size={18} />
               </button>
             </div>
           )}
@@ -723,12 +759,17 @@ export function DocumentEditor({
           {wordInserted && (
             <button
               onMouseDown={handleDragStart}
-              className="fixed z-50 bg-[#8149EC] hover:bg-[#9159FC] text-white px-4 py-2 rounded-lg shadow-lg transition-colors text-sm font-medium"
+              className="fixed z-50 bg-[#8149EC] hover:bg-[#9159FC] text-white px-4 py-2 rounded-lg shadow-lg transition-colors text-sm font-medium flex items-center gap-2"
               style={{
                 left: `${dragButtonPosition.x}px`,
                 top: `${dragButtonPosition.y}px`,
               }}
             >
+              {/* Two thin vertical lines icon */}
+              <svg viewBox="0 0 8 14" fill="none" width="8" height="14" className="flex-shrink-0">
+                <rect x="0.5" y="0" width="2.5" height="14" rx="1.25" fill="white" opacity="0.9"/>
+                <rect x="5" y="0" width="2.5" height="14" rx="1.25" fill="white" opacity="0.9"/>
+              </svg>
               Drag to add
             </button>
           )}
@@ -787,7 +828,14 @@ export function DocumentEditor({
           }}
         >
           <div className="w-[370px] h-full">
-            <AiToolPanel onClose={onToggleAiTool} activeTab={aiToolActiveTab} onTabChange={onAiToolTabChange} />
+            <AiToolPanel
+              onClose={onToggleAiTool}
+              activeTab={aiToolActiveTab}
+              onTabChange={onAiToolTabChange}
+              selectInsertionActive={selectInsertionActive}
+              onSelectInsertionToggle={handleSelectInsertionToggle}
+              insertedCharCount={insertedCharCount}
+            />
           </div>
         </div>
       </div>

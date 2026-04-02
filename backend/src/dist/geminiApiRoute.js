@@ -168,4 +168,40 @@ router.post("/generate-prompt", function (req, res) { return __awaiter(void 0, v
         }
     });
 }); });
+router.post("/generate-create", function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, prompts, advancedOptions, insertedCharCount, includeAdvancedOptions, toggleSelectInsertion, promptText, advancedConfigText, prompt, response, error_5;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = req.body, prompts = _a.prompts, advancedOptions = _a.advancedOptions, insertedCharCount = _a.insertedCharCount, includeAdvancedOptions = _a.includeAdvancedOptions, toggleSelectInsertion = _a.toggleSelectInsertion;
+                promptText = "";
+                if (Array.isArray(prompts)) {
+                    promptText = prompts
+                        .map(function (prompt, index) { return "- \"" + prompt.userPrompt + "\""; })
+                        .join("\n");
+                }
+                advancedConfigText = refineText_1.createBuildAdvancedConfigText(insertedCharCount, toggleSelectInsertion, advancedOptions, includeAdvancedOptions);
+                prompt = refineText_1.createStartPrompt + "\n" + refineText_1.createPrompt[0] +
+                    promptText +
+                    ("\n" + advancedConfigText + "\n" + refineText_1.createPrompt[1]);
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, ai.models.generateContent({
+                        model: model_flash_lite,
+                        contents: prompt
+                    })];
+            case 2:
+                response = _b.sent();
+                res.json({ message: response.text, prompt: prompt });
+                return [3 /*break*/, 4];
+            case 3:
+                error_5 = _b.sent();
+                console.error("Error occurred:", error_5);
+                res.status(500).json({ message: "Internal server error", prompt: "-" });
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
 exports["default"] = router;

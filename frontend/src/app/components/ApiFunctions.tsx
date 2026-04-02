@@ -305,6 +305,54 @@ export async function PromptGenerate(
 }
 
 
+/**
+ * CreateGenerate --- sends prompt data to API
+ * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param insertedCharCount -> number of characters to be inserted
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ * @param toggleSelectInsertion -> whether select insertion mode is on
+ */
+export async function CreateGenerate(
+  prompts: Prompt[],
+  advancedOptions: AdvancedOptionsConfig,
+  insertedCharCount: number,
+  includeAdvancedOptions: boolean,
+  toggleSelectInsertion: boolean,
+): Promise<string> {
+  const { temperature, useSpelling, ...filteredAdvancedOptions } = advancedOptions;
+
+  // Send API request
+  try {
+    const response = await fetch(
+      "http://localhost:5000/api/gemini/generate-create",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompts: prompts.map(({ id, label, userPrompt }) => ({ userPrompt })), // Only include userPrompt
+          advancedOptions: filteredAdvancedOptions,
+          insertedCharCount,
+          includeAdvancedOptions,
+          toggleSelectInsertion,
+        }),
+      },
+    );
+
+    const result = await response.json();
+    console.log("API Response (Create) -----");
+    console.log(result.message);
+    console.log(result.prompt);
+    return Promise.resolve(result.message);
+  } catch (error) {
+    console.error("API Error (Create):", error);
+    return Promise.reject(-1);
+  }
+}
+
+
 
 
 

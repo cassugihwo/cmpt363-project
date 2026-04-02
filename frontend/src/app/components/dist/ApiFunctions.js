@@ -47,7 +47,7 @@ var __rest = (this && this.__rest) || function (s, e) {
     return t;
 };
 exports.__esModule = true;
-exports.PromptGenerate = exports.TestPromptFunction = exports.SliderGenerate = exports.TestSliderFunction = exports.DebugFunction1 = exports.DebugFunction0 = exports.DebugFunctions = void 0;
+exports.CreateGenerate = exports.PromptGenerate = exports.TestPromptFunction = exports.SliderGenerate = exports.TestSliderFunction = exports.DebugFunction1 = exports.DebugFunction0 = exports.DebugFunctions = void 0;
 var react_1 = require("react");
 var lucide_react_1 = require("lucide-react");
 function DebugFunctions(debugMode) {
@@ -341,3 +341,56 @@ function PromptGenerate(text, prompts, advancedOptions, includeAdvancedOptions) 
     });
 }
 exports.PromptGenerate = PromptGenerate;
+/**
+ * CreateGenerate --- sends prompt data to API
+ * @param prompts -> array of current Prompt objects
+ * @param advancedOptions -> current advanced options configuration
+ * @param insertedCharCount -> number of characters to be inserted
+ * @param includeAdvancedOptions -> whether to include advanced options in API request
+ * @param toggleSelectInsertion -> whether select insertion mode is on
+ */
+function CreateGenerate(prompts, advancedOptions, insertedCharCount, includeAdvancedOptions, toggleSelectInsertion) {
+    return __awaiter(this, void 0, Promise, function () {
+        var temperature, useSpelling, filteredAdvancedOptions, response, result, error_6;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    temperature = advancedOptions.temperature, useSpelling = advancedOptions.useSpelling, filteredAdvancedOptions = __rest(advancedOptions, ["temperature", "useSpelling"]);
+                    _a.label = 1;
+                case 1:
+                    _a.trys.push([1, 4, , 5]);
+                    return [4 /*yield*/, fetch("http://localhost:5000/api/gemini/generate-create", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                prompts: prompts.map(function (_a) {
+                                    var id = _a.id, label = _a.label, userPrompt = _a.userPrompt;
+                                    return ({ userPrompt: userPrompt });
+                                }),
+                                advancedOptions: filteredAdvancedOptions,
+                                insertedCharCount: insertedCharCount,
+                                includeAdvancedOptions: includeAdvancedOptions,
+                                toggleSelectInsertion: toggleSelectInsertion
+                            })
+                        })];
+                case 2:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 3:
+                    result = _a.sent();
+                    console.log("API Response (Create) -----");
+                    console.log(result.message);
+                    console.log(result.prompt);
+                    return [2 /*return*/, Promise.resolve(result.message)];
+                case 4:
+                    error_6 = _a.sent();
+                    console.error("API Error (Create):", error_6);
+                    return [2 /*return*/, Promise.reject(-1)];
+                case 5: return [2 /*return*/];
+            }
+        });
+    });
+}
+exports.CreateGenerate = CreateGenerate;
