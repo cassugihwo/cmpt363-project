@@ -183,7 +183,7 @@ function AiToolPanel(_a) {
     // Advanced options state
     var _t = react_1.useState(0), currentWords = _t[0], setCurrentWords = _t[1];
     var _u = react_1.useState(INITIAL_ADVANCED_OPTIONS), advancedOptionsConfig = _u[0], setAdvancedOptionsConfig = _u[1];
-    var _v = react_1.useState(false), includeAdvancedOptions = _v[0], setIncludeAdvancedOptions = _v[1];
+    var _v = react_1.useState(true), includeAdvancedOptions = _v[0], setIncludeAdvancedOptions = _v[1];
     var _w = react_1.useState(false), toggleCreateAdvanced = _w[0], setToggleCreateAdvanced = _w[1];
     var TICK_COUNT = 11; // 0 through 10
     react_1["default"].useEffect(function () {
@@ -237,6 +237,7 @@ function AiToolPanel(_a) {
                             : "")))),
                 react_1["default"].createElement("div", null,
                     react_1["default"].createElement("p", { className: "text-[#E9E9E9] text-[13px] font-medium mb-3" }, "Include:"),
+                    react_1["default"].createElement("p", { className: "text-[#A6A6A6] text-[12px] font-medium mb-3" }, "Separate words/phrases with commas"),
                     react_1["default"].createElement("div", { className: "flex flex-col gap-2" }, [
                         {
                             ph: "All of these words...",
@@ -244,7 +245,7 @@ function AiToolPanel(_a) {
                             field: "includeAllWords"
                         },
                         {
-                            ph: "This exact phrase...",
+                            ph: "These exact phrases...",
                             val: advancedOptionsConfig.includeExactPhrases,
                             field: "includeExactPhrases"
                         },
