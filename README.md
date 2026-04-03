@@ -4,7 +4,15 @@ A writing tool with an integrated AI text assistant. Made with React and Node.js
 Made as a project for CMPT363, SFU. Spring 2026
 By Cas, Ali, Audrey
 
-## Setup
+## Table of Contents
+
+- [How to run the application](#how-to-run-the-application)
+  - [Installing dependencies](#1-installing-dependencies)
+  - [Add Gemini API key](#2-add-gemini-api-key)
+  - [Running the application](#3-running-the-application)
+- [Attributions](#attributions)
+
+## How to run the application
 To run this project, you must have Node.js installed on your computer.
 
 ### 1. Installing dependencies
@@ -42,3 +50,6 @@ npm run dev
 ```
 
 The application should run on http://localhost:5173/.
+
+## Attributions
+This project’s code was developed with assistance from generative AI tools, including Figma Make and GitHub Copilot. However, the user interface design and the application’s core logic were created and implemented by the group members.

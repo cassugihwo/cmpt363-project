@@ -5,7 +5,7 @@ var react_1 = require("react");
 var lucide_react_1 = require("lucide-react");
 var AiToolPanel_1 = require("./AiToolPanel");
 var MenuBar_1 = require("./MenuBar");
-var SAMPLE_CONTENT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n\nI am able to provide professional and friendly customer service and am eager to assist and interact with people. As a peer tutor for Fraser International College (FIC), I tutored international students, like myself, who were first-years and struggling in courses. We were expected to maintain professionalism, as we represented FIC. It was a rewarding yet challenging experience to assist these students who sometimes lacked English proficiency. I also helped promote the peer tutoring service at FIC by tabling at booths to inform and answer questions about peer tutoring. \n\nMorbi commodo ac nibh ut finibus. Suspendisse potenti. Maecenas sollicitudin posuere aliquet. Pellentesque venenatis orci sem. Nullam sodales volutpat sollicitudin. Cras ultricies neque a ante sollicitudin, a elementum arcu finibus. Praesent non elit et lectus euismod pellentesque quis quis turpis. Aenean et finibus augue. Cras euismod ac ligula vel ultrices. Nullam ac orci non tortor vehicula sollicitudin. Vestibulum sed odio a tortor molestie semper.\n\nQuisque fringilla metus vulputate condimentum lacinia. Morbi ut luctus ipsum, varius viverra urna. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; In mollis vel odio sit amet condimentum. Praesent cursus leo cursus, tincidunt massa ac, fermentum ipsum. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Fusce non vulputate metus. Nulla sollicitudin mauris ligula. Mauris mattis congue pellentesque. Praesent vitae malesuada diam. Nam luctus ex sed lorem fringilla dictum. Morbi a erat in enim viverra consectetur nec vitae magna. Sed suscipit vulputate neque, eu pulvinar nulla vulputate nec.";
+var SAMPLE_CONTENT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. \n\nI am able to provide professional and friendly customer service and am eager to assist and interact with people. As a peer tutor for Fraser International College (FIC), I tutored international students, like myself, who were first-years and struggling in courses. We were expected to maintain professionalism, as we represented FIC. It was a rewarding yet challenging experience to assist these students who sometimes lacked English proficiency. I also helped promote the peer tutoring service at FIC by tabling at booths to inform and answer questions about peer tutoring. \n\nIn addition, I bring strong teamwork and adaptability skills to fast-paced environments. Through my academic and tutoring experiences, I frequently collaborated with peers to solve problems, share knowledge, and support group objectives. I am comfortable adjusting my communication style depending on the situation, whether working independently, assisting customers, or coordinating with team members. I take initiative when needed, remain organized under pressure, and strive to contribute positively to the workplace by being reliable, approachable, and solution-oriented.";
 var TEXT_STYLES = [
     "Normal text",
     "Title",
@@ -59,9 +59,35 @@ function DocumentEditor(_a) {
     var _t = react_1.useState(false), selectInsertionActive = _t[0], setSelectInsertionActive = _t[1];
     var _u = react_1.useState(0), insertedCharCount = _u[0], setInsertedCharCount = _u[1];
     var handleFinish = function (text) {
+        var _a, _b;
+        if (aiToolActiveTab === "create") {
+            if (insertedSpansRef.current.length > 0 &&
+                actualWordsRef.current.length > 0) {
+                // Add space at the beginning (before first span)
+                insertedSpansRef.current.forEach(function (span, index) {
+                    var _a;
+                    (_a = span.parentNode) === null || _a === void 0 ? void 0 : _a.removeChild(span);
+                });
+                (_a = savedRangeRef.current) === null || _a === void 0 ? void 0 : _a.deleteContents();
+                savedRangeRef.current = null;
+                // Update document content
+                if (activeDoc && editorRef.current) {
+                    onUpdateDocument(activeDoc.id, editorRef.current.innerText);
+                }
+                // Reset state
+                setWordInserted(false);
+                setShowFloatingButton(false);
+                setActualWord("");
+                setInsertedCharCount(0);
+                insertedSpanRef.current = null;
+                insertedSpansRef.current = [];
+                actualWordsRef.current = [];
+            }
+            (_b = editorRef.current) === null || _b === void 0 ? void 0 : _b.focus();
+        }
         if (storedRange && editorRef.current) {
             storedRange.deleteContents();
-            storedRange.insertNode(document.createTextNode(text));
+            storedRange.insertNode(document.createTextNode(" " + text + " "));
             setStoredRange(null);
         }
     };
@@ -89,7 +115,7 @@ function DocumentEditor(_a) {
     var insertWordAtCursor = react_1.useCallback(function () {
         var _a;
         var word = generateRandomWord();
-        var obfuscated = "*".repeat(word.length);
+        var obfuscated = ".".repeat(word.length);
         if (savedRangeRef.current) {
             var selection = window.getSelection();
             if (selection) {
@@ -207,6 +233,7 @@ function DocumentEditor(_a) {
             insertedSpanRef.current = null;
             insertedSpansRef.current = [];
             actualWordsRef.current = [];
+            savedRangeRef.current = null;
         }
         (_a = editorRef.current) === null || _a === void 0 ? void 0 : _a.focus();
     }, [activeDoc, onUpdateDocument]);
@@ -236,7 +263,7 @@ function DocumentEditor(_a) {
         // If mouse is ahead of selection end, add words
         if (mouseX > endX && distance > 30) {
             var word = generateRandomWord();
-            var obfuscated = "*".repeat(word.length);
+            var obfuscated = ".".repeat(word.length);
             // Create new span
             var newSpan = document.createElement("span");
             newSpan.style.backgroundColor = "#8149EC33";
@@ -337,7 +364,7 @@ function DocumentEditor(_a) {
             // Position button above cursor
             var buttonWidth = 100; // Approximate button width
             var buttonHeight = 40; // Approximate button height with offset
-            var x = rect.left + rect.width / 2 - buttonWidth / 2;
+            var x = rect.left;
             var y = rect.top - buttonHeight;
             setFloatingButtonPosition({ x: x, y: y });
             setShowFloatingButton(true);
@@ -528,11 +555,6 @@ function DocumentEditor(_a) {
                         left: floatingButtonPosition.x + "px",
                         top: floatingButtonPosition.y + "px"
                     } },
-                    React.createElement("button", { onMouseDown: function (e) {
-                            e.preventDefault();
-                            acceptWord();
-                        }, className: "bg-[#22C55E] hover:bg-[#16A34A] text-white p-2 rounded-lg shadow-lg transition-colors", title: "Accept word" },
-                        React.createElement(lucide_react_1.Check, { size: 18 })),
                     React.createElement("button", { onMouseDown: function (e) {
                             e.preventDefault();
                             deleteWord();
