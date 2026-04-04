@@ -958,7 +958,7 @@ export function AiToolPanel({
                     }}
                     className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
                   >
-                    Finish
+                    Insert
                   </button>
                   <button
                     onClick={() => {
@@ -1140,7 +1140,7 @@ export function AiToolPanel({
                     }}
                     className="bg-white text-[#484848] text-[13px] font-medium px-4 py-[5px] rounded-[6px] hover:bg-[#f0f0f0] transition-colors"
                   >
-                    Finish
+                    Insert
                   </button>
                   <button
                     onClick={() => {
