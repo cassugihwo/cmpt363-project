@@ -388,6 +388,9 @@ export function AiToolPanel({
               <p className="text-[#E9E9E9] text-[13px] font-medium mb-3">
                 Include:
               </p>
+              <p className="text-[#A6A6A6] text-[12px] font-medium mb-3">
+                Separate words/phrases with commas
+              </p>
               <div className="flex flex-col gap-2">
                 {[
                   {
@@ -396,7 +399,7 @@ export function AiToolPanel({
                     field: "includeAllWords",
                   },
                   {
-                    ph: "This exact phrase...",
+                    ph: "These exact phrases...",
                     val: advancedOptionsConfig.includeExactPhrases,
                     field: "includeExactPhrases",
                   },
